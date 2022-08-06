@@ -1,0 +1,9 @@
+:~  title+'Minesweeper'
+    info+'Classic Minesweeper.'
+    color+0x10.0032
+    base+'minesweeper'
+    site+/apps/minesweeper
+    version+[1 0 0]
+    website+'https://urbit.org/grants'
+    license+'MIT'
+==
