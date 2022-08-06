@@ -4,7 +4,7 @@
 +$  versioned-state
   $%  state-0
   ==
-+$  state-0  [%0 =settings =game-state =grid =leaderboard]
++$  state-0  [%0 =settings =game-state gameboard=grid =leaderboard]
 +$  card  card:agent:gall
 -- 
 %-  agent:dbug
@@ -18,7 +18,7 @@
     hc    ~(. +> bowl)
 ++  on-init
   ^-  (quip card _this)
-  `this(settings [5 5 7], game-state [0 %.n %.n], grid (generate-grid:hc 5 5 10))
+  `this(settings [5 5 7], game-state [0 %.n %.n], gameboard (generate-grid:hc 5 5 7))
 ::
 ++  on-save
   ^-  vase
@@ -43,52 +43,72 @@
 ::
 |_  =bowl:gall
 ++  generate-grid
-  ~&  our:bowl
   |=  [width=@ud height=@ud mines=@ud]
-  =/  empty-grid  (new-grid width height mines)
+  =/  empty-grid  (new-grid width height)
   =/  mines-grid  (place-mines empty-grid mines)
-  =/  final-grid  (calc-neighbors mines-grid)
+  ::  =/  final-grid  (calc-neighbors mines-grid)
   mines-grid
 ::
 ++  place-mines
-  |=  [empty-grid=(list (list tile)) mines=@ud]
-  empty-grid
+  |=  [newgrid=grid minetotal=@ud]
+  ^-  grid
+  =/  i  0
+  =/  minecount  0
+  |-
+  ?:  =(minecount minetotal)
+    newgrid
+  %=  $
+    i  +(i)
+    newgrid  (roll-for-mine newgrid i minetotal)
+    minecount  ?:  =(newgrid (roll-for-mine newgrid i minetotal))
+                 minecount
+               +(minecount)
+  ==
 ::
-++  calc-neighbors
-  |=  mines-grid=(list (list tile))
-  mines-grid
+++  roll-for-mine
+  |=  [newgrid=grid i=@ud minetotal=@ud]
+  ^-  grid
+  =/  size  (lent newgrid)
+  :: Using mod throws a hood error here?
+  ::=/  pos  (mod size i) 
+  =/  pos   |-
+            ?:  (gth i size)
+              $(i (sub i size))
+            i
+  =/  dice-roll  (~(rad og (add eny:bowl i)) 1.000)
+  ?:  (lte dice-roll 1)
+    (snap newgrid pos mine-tile)
+  newgrid
+::
+::  ++  calc-neighbors
+::    |=  newgrid=grid
+::    =/  size  (lent newgrid)
+::    =/  i  0
+::    |-
+::    ?:  =(i size)
+::      newgrid
+::    $(newgrid (my-neighbors newgrid i), i +(i))
+::  ::
+::  ++  my-neighbors
+::    |=  [newgrid=grid i=@ud]
+::    =~  0
+::        ?:  =(i (mod size width)) :: haha, but is mod going to work here? or will it error out?
+::    ==
+::  
+::    ?~  (snag newgrid (sub i 1))
+::  
 ::
 ++  new-grid
-  |=  [width=@ud height=@ud mines=@ud]
-  =/  y  0
+  |=  [width=@ud height=@ud]
+  =/  size  (mul width height)
+  =/  count  0
   |-
-  ^-  (list (list tile))
-  ?:  =(height y)
+  ^-  grid
+  ?:  =(count size)
     ~
-  :-  (new-row width mines)
-  $(y +(y))
+  :-  new-tile
+  $(count +(count))
 ::
-++  new-row
-  |=  [width=@ud mines=@ud]
-  =/  x  0
-  |-
-  ^-  (list tile)
-  ?:  =(width x)
-    ~
-  :-  (new-tile mines)
-  $(x +(x))
-::
-++  new-tile  
-  |=  mines=@ud
-  ^-  tile
-  :*  %.n  %.n
-    :: Just doing probability for now
-    :: mines = percent chance of any tile being a mine
-    =/  dice-roll  (~(rad og eny:bowl) 100)
-    ~&  dice-roll
-    ?:  (lte dice-roll mines)
-      %.y
-    %.n
-  0
-  ==
+++  new-tile  [%.n %.n %.n 0]
+++  mine-tile  ^-  tile  [%.n %.n %.y 0]
 --
