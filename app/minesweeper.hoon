@@ -46,57 +46,134 @@
   |=  [width=@ud height=@ud mines=@ud]
   =/  empty-grid  (new-grid width height)
   =/  mines-grid  (place-mines empty-grid mines)
-  ::  =/  final-grid  (calc-neighbors mines-grid)
-  mines-grid
+  =/  final-grid  (calc-neighbors mines-grid width)
+  final-grid
 ::
 ++  place-mines
-  |=  [newgrid=grid minetotal=@ud]
-  ^-  grid
+  |=  [=grid minetotal=@ud]
+  ^+  grid
   =/  i  0
   =/  minecount  0
   |-
   ?:  =(minecount minetotal)
-    newgrid
+    grid
   %=  $
     i  +(i)
-    newgrid  (roll-for-mine newgrid i minetotal)
-    minecount  ?:  =(newgrid (roll-for-mine newgrid i minetotal))
+    grid  (roll-for-mine grid i)
+    minecount  ?:  =(grid (roll-for-mine grid i))
                  minecount
                +(minecount)
   ==
 ::
 ++  roll-for-mine
-  |=  [newgrid=grid i=@ud minetotal=@ud]
-  ^-  grid
-  =/  size  (lent newgrid)
-  :: Using mod throws a hood error here?
-  ::=/  pos  (mod size i) 
-  =/  pos   |-
-            ?:  (gth i size)
-              $(i (sub i size))
-            i
-  =/  dice-roll  (~(rad og (add eny:bowl i)) 1.000)
+  |=  [=grid i=@ud]
+  ^+  grid
+  =/  size  (lent grid)
+  =/  pos  (mymod i size)
+  =/  dice-roll  (~(rad og (add eny:bowl i)) size)
   ?:  (lte dice-roll 1)
-    (snap newgrid pos mine-tile)
-  newgrid
+    (snap grid pos mine-tile)
+  grid
 ::
-::  ++  calc-neighbors
-::    |=  newgrid=grid
-::    =/  size  (lent newgrid)
-::    =/  i  0
-::    |-
-::    ?:  =(i size)
-::      newgrid
-::    $(newgrid (my-neighbors newgrid i), i +(i))
-::  ::
-::  ++  my-neighbors
-::    |=  [newgrid=grid i=@ud]
-::    =~  0
-::        ?:  =(i (mod size width)) :: haha, but is mod going to work here? or will it error out?
-::    ==
-::  
-::    ?~  (snag newgrid (sub i 1))
-::  
+++  calc-neighbors
+  |=  [=grid width=@ud]
+  ^+  grid
+  =/  size  (lent grid)
+  =/  i  0
+  |-
+  ?:  =(i size)
+    grid
+  %=  $
+    i  +(i)
+    grid  (tile-neighbors grid i width) :: (snap grid i (tile-neighbors (snag i grid) i width))
+  ==
+::
+++  tile-neighbors
+  |=  [=grid i=@ud width=@ud]
+  ^+  grid
+  =/  n  0
+  =.  n  (add n (nbr-left grid i width))
+  =.  n  (add n (nbr-right grid i width))
+  =.  n  (add n (nbr-up grid i width))
+  =.  n  (add n (nbr-down grid i width))
+  =.  n  (add n (nbr-up-left grid i width))
+  =.  n  (add n (nbr-up-right grid i width))
+  =.  n  (add n (nbr-down-left grid i width))
+  =.  n  (add n (nbr-down-right grid i width))
+  =/  tile  (snag i grid)
+  (snap grid i [revealed:tile flagged:tile mine:tile n])
+::
+++  nbr-left
+  |=  [=grid i=@ud width=@ud]
+  ?:  =(0 (mymod i width))
+    0
+  ?:  =(%.y mine:(snag (sub i 1) grid))
+    1
+  0
+::
+++  nbr-right
+  |=  [=grid i=@ud width=@ud]
+  ?:  =((sub width 1) (mymod i width))
+    0
+  ?:  =(%.y mine:(snag (add i 1) grid))
+    1
+  0
+::
+++  nbr-up
+  |=  [=grid i=@ud width=@ud]
+  ?:  (lth i width)
+    0
+  ?:  =(%.y mine:(snag (sub i width) grid))
+    1
+  0
+::
+++  nbr-down
+  |=  [=grid i=@ud width=@ud]
+  ?:  (gte i (sub (lent grid) width))
+    0
+  ?:  =(%.y mine:(snag (add i width) grid))
+    1
+  0
+::
+++  nbr-up-left
+  |=  [=grid i=@ud width=@ud]
+  ?:  (lth i width)
+    0
+  ?:  =(0 (mymod i width))
+    0
+  ?:  =(%.y mine:(snag (sub (sub i width) 1) grid))
+    1
+  0
+::
+++  nbr-down-left
+  |=  [=grid i=@ud width=@ud]
+  ?:  (gte i (sub (lent grid) width))
+    0
+  ?:  =(0 (mymod i width))
+    0
+  ?:  =(%.y mine:(snag (sub (add i width) 1) grid))
+    1
+  0
+::
+++  nbr-down-right
+  |=  [=grid i=@ud width=@ud]
+  ?:  (gte i (sub (lent grid) width))
+    0
+  ?:  =((sub width 1) (mymod i width))
+    0
+  ?:  =(%.y mine:(snag (add (add i width) 1) grid))
+    1
+  0
+::
+++  nbr-up-right
+  |=  [=grid i=@ud width=@ud]
+  ?:  (lth i width)
+    0
+  ?:  =((sub width 1) (mymod i width))
+    0
+  ?:  =(%.y mine:(snag (add (sub i width) 1) grid))
+    1
+  0
 ::
 ++  new-grid
   |=  [width=@ud height=@ud]
@@ -108,6 +185,14 @@
     ~
   :-  new-tile
   $(count +(count))
+::
+::  mod from stdlib is erroring
+++  mymod
+  |=  [x=@ud y=@ud]  
+  |-
+  ?:  (gte x y)
+    $(x (sub x y))
+  x
 ::
 ++  new-tile  [%.n %.n %.n 0]
 ++  mine-tile  ^-  tile  [%.n %.n %.y 0]
