@@ -32,7 +32,58 @@
 %0  `this(state old)
 ==
 ::
-++  on-poke   on-poke:def
+++  on-poke
+  |=  [=mark =vase]
+  ^-  (quip card _this)
+  |^
+  ?>  =(src.bowl our.bowl)
+  ?+    mark  (on-poke:def mark vase)
+      %noun
+    =^  cards  state
+      (handle-action !<(action vase))
+    [cards this]
+  ==
+  ++  handle-action
+    |=  act=action
+    ^-  (quip card _state)
+    ?-    -.act
+        %new-game
+      :-  ~
+      %=  state
+        settings  +.act
+        game-state  [0 %.n %.n]
+        gameboard  (generate-grid:hc +.act)
+      ==
+      ::
+        %guess
+      =/  pos  (add (mul y:act width:settings) x:act)
+      =/  tile  (snag pos gameboard)
+      ?:  mine:tile
+        `state(game-state [reveals:game-state %.n %.y])
+      =/  newtile  ^+  tile
+        [%.y flagged:tile mine:tile neighbors:tile]
+      =/  victory
+        ?:  .=  (add +(reveals:game-state) mines:settings) 
+            (mul width:settings height:settings)
+          %.y
+        %.n
+      :-  ~
+      %=  state
+        gameboard  (snap gameboard pos newtile)
+        game-state  [+(reveals:game-state) victory %.n]
+      ==
+      ::
+        %flag
+      =/  pos  (add (mul y:act width:settings) x:act)
+      =/  tile  (snag pos gameboard)
+      =/  newtile  ^+  tile
+        ?.  flagged:tile
+           [revealed:tile %.y mine:tile neighbors:tile]
+         [revealed:tile %.n mine:tile neighbors:tile]
+      `state(gameboard (snap gameboard pos newtile))
+    ==
+  --
+::
 ++  on-watch  on-watch:def
 ++  on-leave  on-leave:def
 ++  on-peek   on-peek:def
@@ -85,7 +136,7 @@
     grid
   %=  $
     i  +(i)
-    grid  (tile-neighbors grid i width) :: (snap grid i (tile-neighbors (snag i grid) i width))
+    grid  (tile-neighbors grid i width)
   ==
 ::
 ++  tile-neighbors
