@@ -1,5 +1,6 @@
 /-  *minesweeper
-/+  default-agent, dbug
+/+  default-agent, dbug, server, schooner
+/*  minesweeper-ui  %html  /app/minesweeper-ui/html
 |%
 +$  versioned-state
   $%  state-0
@@ -18,7 +19,12 @@
     hc    ~(. +> bowl)
 ++  on-init
   ^-  (quip card _this)
-  `this(settings [5 5 7], game-state [0 %.n %.n], gameboard (generate-grid:hc 5 5 7))
+  :_  this(settings [5 5 7], game-state [0 %.n %.n], gameboard (generate-grid:hc 5 5 7))
+  :~
+    :*  %pass  /eyre/connect  %arvo  %e 
+        %connect  `/apps/minesweeper  %minesweeper
+    ==  
+  ==
 ::
 ++  on-save
   ^-  vase
@@ -38,11 +44,84 @@
   |^
   ?>  =(src.bowl our.bowl)
   ?+    mark  (on-poke:def mark vase)
-      %noun
+      %handle-http-request
     =^  cards  state
-      (handle-action !<(action vase))
+      (handle-http !<([@ta =inbound-request:eyre] vase))
     [cards this]
   ==
+  ::
+  ++  handle-http
+    |=  [eyre-id=@ta =inbound-request:eyre]
+    ^-  (quip card _state)
+    =/  ,request-line:server
+      (parse-request-line:server url.request.inbound-request)
+    =+  send=(cury response:schooner eyre-id)
+    ?.  authenticated.inbound-request
+      :_  state
+      %-  send
+      [302 ~ [%login-redirect './apps/minesweeper']]
+    ::
+    ?+    method.request.inbound-request  
+      [(send [405 ~ [%stock ~]]) state]
+      ::
+      ::   %'POST'
+      :: ?~  body.request.inbound-request
+      ::   [(send [405 ~ [%stock ~]]) state]
+      :: =/  json  (de-json:html q.u.body.request.inbound-request)
+      :: =/  action  (dejs-action +.json) 
+      :: (handle-action action) 
+      :: 
+        %'GET'
+      ?+  site  :_  state 
+                %-  send
+                :+  404
+                  ~ 
+                [%plain "404 - Not Found"] 
+          [%apps %minesweeper ~]
+        :_  state
+        %-  send  
+        :+  200
+          ~
+        [%html minesweeper-ui]  
+        ::
+          [%apps %minesweeper %state ~]
+        :_  state
+        %-  send
+        :+  200   
+          ~ 
+        [%json (enjs-state [settings game-state gameboard])]
+      ==
+    ==
+  ::              
+  ++  enjs-state
+    =,  enjs:format
+    |=  $:  
+            settings=[width=@ud height=@ud mines=@ud]
+            game-state=[reveals=@ud win=? lose=?]
+            grid=(list [revealed=? flagged=? mine=? neighbors=@ud])
+        ==
+    ^-  json
+    :-  %a
+    :~ 
+      (numb width:settings)
+      (numb height:settings)
+      (numb mines:settings)
+      (numb reveals:game-state)
+      [%b win:game-state]
+      [%b lose:game-state]
+      :-  %a
+      %+  turn
+        grid
+      |=  tile=[revealed=? flagged=? mine=? neighbors=@ud]
+      :-  %a
+      :~
+          [%b revealed:tile]
+          [%b flagged:tile]
+          [%b mine:tile]
+          (numb neighbors:tile)
+      ==
+    ==
+  ::
   ++  handle-action
     |=  act=action
     ^-  (quip card _state)
@@ -84,7 +163,13 @@
     ==
   --
 ::
-++  on-watch  on-watch:def
+++  on-watch
+  |=  =path
+  ^-  (quip card _this)
+  ?+    path  (on-watch:def path)
+      [%http-response *]
+    `this
+  ==
 ++  on-leave  on-leave:def
 ++  on-peek   on-peek:def
 ++  on-agent  on-agent:def

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>Minesweeper</title>
+	<meta charset="utf-8">
+	<style>
+		* {
+			margin: 0;
+		}
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+		}
+		canvas {
+			display: block;
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+		}
+	</style>
+    
+</head>
+
+<body style="background-color:black;">
+
+<script type="module">
+
+import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
+
+const windowWidth = document.documentElement.clientWidth
+const windowHeight = document.documentElement.clientHeight
+const gameWidth = 1200
+const gameHeight = 700
+const scaleX = windowWidth / gameWidth
+const scaleY = windowHeight / gameHeight 
+const scaleGame = Math.min(scaleX, scaleY)
+
+async function getState() {
+        const response = await fetch('/apps/minesweeper/state')
+        return response.json()
+    }
+var state = await getState()
+
+var width = state[0]
+var height = state[1]
+var mines = state[2]
+var reveals = state[3]
+var win = state[4]
+var lose = state[5]
+var grid = state[6]
+
+console.log(width)
+console.log(height)
+
+kaboom({
+    width: 1200,
+    height: 700,
+    scale: scaleGame,
+    background: [255, 255, 255]
+})
+
+var topBuffer = 20
+var leftBuffer = 20
+var topGridBuffer = topBuffer + 10
+var leftGridBuffer = leftBuffer + 10
+
+var tileSize = 20
+var tileSpace = tileSize + 2
+
+function drawGrid()
+{
+  onDraw(() => {
+    drawRect({
+      pos: vec2(leftBuffer, topBuffer),
+      width: tileSpace * width + leftBuffer,
+      height: tileSpace * height + topBuffer,
+      color: rgb(240, 240, 240),
+      radius: 3,
+      outline: {width: 1, color: rgb(0, 0, 0)}
+    })
+
+    for(var j = 0; j < height; j++) 
+      for(var i = 0; i < width; i++) 
+        drawTile(leftGridBuffer + i * tileSpace, topGridBuffer + j * tileSpace, grid[j*width + i])
+  })
+}
+
+function drawTile(x, y, tile)
+{
+    var revealed = tile[0]
+    var flagged = tile[1]
+    var mine = tile[2]
+    var neighbors = tile[3]
+    
+    var tileColor = rgb(190, 190, 190)
+    if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && isMouseDown())
+      tileColor = rgb(250, 250, 250)
+    if(mine == 1)
+      tileColor = rgb(230, 230, 230)
+
+    drawRect({
+      pos: vec2(x, y),
+      width: tileSize,
+      height: tileSize,
+      color: tileColor,
+      outline: {width: 1, color: rgb(0, 0, 0)}
+    })
+    if(mine == 0)
+    {
+        drawText({
+            text: neighbors,
+            font: "sink",
+            pos: vec2(x + tileSize/2, y + tileSize/2),
+            origin: "center",
+            size: tileSize*.8,
+            color: rgb(0, 0, 0)
+        })
+    }
+}
+
+scene("minesweeper", () => {
+    layers([
+        "default",
+    ], "default")
+
+    drawGrid()
+})
+
+go("minesweeper")
+
+
+</script>
+
+</body>
+
+</html>
