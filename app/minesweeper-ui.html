@@ -54,8 +54,12 @@ var win = state[4]
 var lose = state[5]
 var grid = state[6]
 
-console.log(width)
-console.log(height)
+function guess(pos) {
+    fetch('/apps/minesweeper', {
+        method: 'POST',
+        body: JSON.stringify({'%guess': pos})
+    })
+}
 
 kaboom({
     width: 1200,
@@ -100,8 +104,8 @@ function drawTile(x, y, tile)
     var tileColor = rgb(190, 190, 190)
     if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && isMouseDown())
       tileColor = rgb(250, 250, 250)
-    if(mine == 1)
-      tileColor = rgb(230, 230, 230)
+    //if(mine == 1)
+    //  tileColor = rgb(50, 50, 50)
 
     drawRect({
       pos: vec2(x, y),
@@ -110,7 +114,7 @@ function drawTile(x, y, tile)
       color: tileColor,
       outline: {width: 1, color: rgb(0, 0, 0)}
     })
-    if(mine == 0)
+    if(revealed == 1 && mines > 0)
     {
         drawText({
             text: neighbors,
@@ -129,6 +133,10 @@ scene("minesweeper", () => {
     ], "default")
 
     drawGrid()
+
+    onMousePress(() => {
+        guess([0, 0])
+    })
 })
 
 go("minesweeper")
