@@ -60,7 +60,7 @@
       :_  state
       %-  send
       [302 ~ [%login-redirect './apps/minesweeper']]
-    :: 
+    ::           
     ?+    method.request.inbound-request 
       [(send [405 ~ [%stock ~]]) state]
       ::
