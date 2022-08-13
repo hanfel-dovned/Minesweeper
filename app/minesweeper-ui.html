@@ -45,7 +45,6 @@ async function getState() {
         return response.json()
     }
 var state = await getState()
-
 var width = state[0]
 var height = state[1]
 var mines = state[2]
@@ -54,11 +53,22 @@ var win = state[4]
 var lose = state[5]
 var grid = state[6]
 
-function guess(pos) {
-    fetch('/apps/minesweeper', {
+async function post(tag, data) {
+    const response = await fetch('/apps/minesweeper', {
         method: 'POST',
-        body: JSON.stringify({'%guess': pos})
+        body: JSON.stringify({[tag]: data})
     })
+
+    state = await response.json()
+    width = await state[0]
+    height = await state[1]
+    mines = await state[2]
+    reveals = await state[3]
+    win = await state[4]
+    lose = await state[5]
+    grid = await state[6]
+
+    await go("minesweeper")
 }
 
 kaboom({
@@ -104,17 +114,22 @@ function drawTile(x, y, tile)
     var tileColor = rgb(190, 190, 190)
     if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && isMouseDown())
       tileColor = rgb(250, 250, 250)
-    //if(mine == 1)
-    //  tileColor = rgb(50, 50, 50)
+    if(flagged == 1)
+      tileColor = rgb(150, 50, 50)
+    if(lose == 1 && mine == 1)
+      tileColor = rgb(0, 0, 0)
 
-    drawRect({
-      pos: vec2(x, y),
-      width: tileSize,
-      height: tileSize,
-      color: tileColor,
-      outline: {width: 1, color: rgb(0, 0, 0)}
-    })
-    if(revealed == 1 && mines > 0)
+    if(revealed == 0 || mine == 1)
+    {
+        drawRect({
+          pos: vec2(x, y),
+          width: tileSize,
+          height: tileSize,
+          color: tileColor,
+          outline: {width: 1, color: rgb(0, 0, 0)}
+        })
+    }
+    if(revealed == 1 && neighbors > 0 && mine == 0)
     {
         drawText({
             text: neighbors,
@@ -127,7 +142,28 @@ function drawTile(x, y, tile)
     }
 }
 
+function getTileFromMouse() {
+  var x = Math.floor((mousePos().x - leftGridBuffer)/tileSpace)
+  var y = Math.floor((mousePos().y - topGridBuffer)/tileSpace)
+
+  console.log(x)
+  console.log(y)
+
+  return [x, y]
+}
+
+function mouseOnGrid() {
+  if(mousePos().x > leftGridBuffer && mousePos().x < (leftGridBuffer + width*tileSpace))
+    if(mousePos().y > topGridBuffer && mousePos().y < (topGridBuffer + height*tileSpace))
+      return 1
+  
+  return 0
+}
+
 scene("minesweeper", () => {
+    console.log(state)
+    console.log(lose)
+
     layers([
         "default",
     ], "default")
@@ -135,8 +171,17 @@ scene("minesweeper", () => {
     drawGrid()
 
     onMousePress(() => {
-        guess([0, 0])
+      if(mouseOnGrid())
+        post("guess", getTileFromMouse())
     })
+    onMousePress("right", () => {
+      if(mouseOnGrid())
+        post("flag", getTileFromMouse())
+    })
+    
+    onKeyPress("space", () => {
+		  post("new-game", [7, 7, 10])
+	  })
 })
 
 go("minesweeper")

@@ -60,7 +60,7 @@
       :_  state
       %-  send
       [302 ~ [%login-redirect './apps/minesweeper']]
-    ::
+    :: 
     ?+    method.request.inbound-request 
       [(send [405 ~ [%stock ~]]) state]
       ::
@@ -89,21 +89,33 @@
       ?~  body.request.inbound-request
         [(send [405 ~ [%stock ~]]) state]
       =/  json  (de-json:html q.u.body.request.inbound-request)
-      ~&  json  
       =/  act  (dejs-action +.json) 
-      ~&  "successfully formatted" 
       ?-    -.act
           %new-game
-        :-  ~
-        %=  state
-          settings  +.act
-          game-state  [0 %.n %.n]
-          gameboard  (generate-grid:hc +.act)
+        =/  newboard  (generate-grid:hc +.act)
+        :_
+          %=  state
+            settings  +.act
+            game-state  [0 %.n %.n]
+            gameboard  newboard
+          ==
+        %-  send
+        :+  200  ~
+        :-  %json 
+        %-  enjs-state
+        :*  
+            +.act
+            [0 %.n %.n]
+            newboard
         ==
         ::
           %guess
         =/  pos  (add (mul y:act width:settings) x:act)
         =/  tile  (snag pos gameboard)
+        ?:  revealed:tile
+          `state
+        ?:  lose:game-state
+          `state
         =/  newtile  ^+  tile
           [%.y flagged:tile mine:tile neighbors:tile]
         =/  loss  ?:(mine:tile %.y %.n)
@@ -114,7 +126,7 @@
             %.y
           %.n
         :: Really shouldn't increment reveals if loss=%.y,
-        :: but it shouldn't matter. 
+        :: but it shouldn't matter.    
         :_
           %=  state
             gameboard  (snap gameboard pos newtile)
@@ -137,7 +149,16 @@
           ?.  flagged:tile
             [revealed:tile %.y mine:tile neighbors:tile]
           [revealed:tile %.n mine:tile neighbors:tile]
-        `state(gameboard (snap gameboard pos newtile))
+        :_  state(gameboard (snap gameboard pos newtile))
+        %-  send
+        :+  200  ~
+        :-  %json 
+        %-  enjs-state
+        :*  
+            settings
+            game-state
+            (snap gameboard pos newtile)
+        ==
       ==
     ==
   ::
@@ -147,9 +168,9 @@
     ^-  action
     %.  jon
     %-  of
-    :~  [%new-game (ot ~[width+ni height+ni mines+ni])]
-        [%guess (ot ~[x+ni y+ni])]
-        [%flag (ot ~[x+ni y+ni])]
+    :~  new-game+(at ~[ni ni ni])
+        guess+(at ~[ni ni])
+        flag+(at ~[ni ni])
     ==
   ::              
   ++  enjs-state
