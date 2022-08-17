@@ -23,10 +23,8 @@
             margin-right: auto;
 		}
 	</style>
-    
 </head>
 
-<body style="background-color:white;">
 
 <script type="module">
 
@@ -74,10 +72,10 @@ async function post(tag, data) {
     await go("minesweeper")
 }
 
-var topBuffer = 30
-var sideBuffer = 10
+var topBuffer = 80
+var sideBuffer = 0
 
-var topGridBuffer = 50
+var topGridBuffer = 14
 var sideGridBuffer = 14
 var bottomGridBuffer = sideGridBuffer
 
@@ -87,19 +85,25 @@ var tileSpace = tileSize + 5
 kaboom({
     width: width * tileSpace + sideGridBuffer * 2 + sideBuffer * 2,
     height: height * tileSpace + topGridBuffer + bottomGridBuffer + topBuffer,
-    scale: scaleGame,
+    //scale: scaleGame,
     background: [255, 255, 255]
 })
 
 function drawGrid()
 {
+
+  var gridColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
+  gridColor = gridColor.substring(4, gridColor.length-1)
+                        .replace(/ /g, '')
+                        .split(',');
+
   onDraw(() => {
     drawRect({
       pos: vec2(sideBuffer, topBuffer),
       width: sideGridBuffer * 2 + tileSpace * width,
       height: topGridBuffer + bottomGridBuffer + tileSpace * height,
-      color: rgb(250, 250, 250),
-      radius: 3,
+      color: rgb(240, 240, 240), //rgb(gridColor[0], gridColor[1], gridColor[2]),
+      radius: 6,
       outline: {width: 1, color: rgb(230, 230, 230)}
     })
 
@@ -203,7 +207,7 @@ function drawTile(x, y, tile)
         })
     }
 
-    if(lose == 1 && mine == 1)
+    if((lose == 1 || win == 1) && mine == 1)
     {
       drawCircle({
         pos: vec2(x + tileSize*.5, y + tileSize*.5),
@@ -227,9 +231,6 @@ function getTileFromMouse() {
   var x = Math.floor((mousePos().x - sideBuffer - sideGridBuffer)/tileSpace)
   var y = Math.floor((mousePos().y - topBuffer - topGridBuffer)/tileSpace)
 
-  console.log(x)
-  console.log(y)
-
   return [x, y]
 }
 
@@ -240,6 +241,7 @@ function mouseOnGrid() {
   
   return 0
 }
+
 
 scene("minesweeper", () => {
 
@@ -254,12 +256,14 @@ scene("minesweeper", () => {
         post("guess", getTileFromMouse())
     })
     onMouseRelease("right", () => {
+      
+
       if(mouseOnGrid() && lose == 0 && win == 0)
         post("flag", getTileFromMouse())
     })
     
     onKeyPress("space", () => {
-		  post("new-game", [6, 6, 4])
+		  post("new-game", [10, 10, 10])
 	  })
 })
 
