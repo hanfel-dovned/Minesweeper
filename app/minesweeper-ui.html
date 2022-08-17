@@ -75,17 +75,17 @@ async function post(tag, data) {
 }
 
 var topBuffer = 30
-var leftBuffer = 10
+var sideBuffer = 10
 
 var topGridBuffer = 50
-var leftGridBuffer = 14
-var bottomGridBuffer = leftGridBuffer
+var sideGridBuffer = 14
+var bottomGridBuffer = sideGridBuffer
 
 var tileSize = 30
 var tileSpace = tileSize + 5
 
 kaboom({
-    width: width * tileSpace + leftGridBuffer * 2 + leftBuffer * 2,
+    width: width * tileSpace + sideGridBuffer * 2 + sideBuffer * 2,
     height: height * tileSpace + topGridBuffer + bottomGridBuffer + topBuffer,
     scale: scaleGame,
     background: [255, 255, 255]
@@ -95,8 +95,8 @@ function drawGrid()
 {
   onDraw(() => {
     drawRect({
-      pos: vec2(leftBuffer, topBuffer),
-      width: leftGridBuffer * 2 + tileSpace * width,
+      pos: vec2(sideBuffer, topBuffer),
+      width: sideGridBuffer * 2 + tileSpace * width,
       height: topGridBuffer + bottomGridBuffer + tileSpace * height,
       color: rgb(250, 250, 250),
       radius: 3,
@@ -105,14 +105,14 @@ function drawGrid()
 
     for(var j = 0; j < height; j++) 
       for(var i = 0; i < width; i++) 
-        drawTile(leftBuffer + leftGridBuffer + i * tileSpace, topBuffer + topGridBuffer + j * tileSpace, grid[j*width + i])
+        drawTile(sideBuffer + sideGridBuffer + i * tileSpace, topBuffer + topGridBuffer + j * tileSpace, grid[j*width + i])
 
     if(lose == 1)
     {
       drawText({
             text: "YOU LOSE",
             font: "apl386",
-            pos: vec2((leftGridBuffer * 2 + tileSpace * width)/2, topGridBuffer),
+            pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topGridBuffer),
             origin: "center",
             size: 50,
             color: rgb(0, 0, 150)
@@ -123,7 +123,7 @@ function drawGrid()
       drawText({
             text: "YOU WIN!",
             font: "apl386",
-            pos: vec2((leftGridBuffer * 2 + tileSpace * width)/2, topGridBuffer),
+            pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topGridBuffer),
             origin: "center",
             size: 50,
             color: rgb(150, 0, 0)
@@ -211,7 +211,7 @@ function drawTile(x, y, tile)
         color: rgb(0, 0, 0),
       })
     }
-    if(flagged == 1)
+    if(flagged == 1 && revealed == 0)
     {
       drawTriangle({
           p1: vec2(x + tileSize*.5, y + tileSize*.33),
@@ -224,7 +224,7 @@ function drawTile(x, y, tile)
 }
 
 function getTileFromMouse() {
-  var x = Math.floor((mousePos().x - leftBuffer - leftGridBuffer)/tileSpace)
+  var x = Math.floor((mousePos().x - sideBuffer - sideGridBuffer)/tileSpace)
   var y = Math.floor((mousePos().y - topBuffer - topGridBuffer)/tileSpace)
 
   console.log(x)
@@ -234,8 +234,8 @@ function getTileFromMouse() {
 }
 
 function mouseOnGrid() {
-  if(mousePos().x > leftBuffer && mousePos().x < (leftBuffer + width*tileSpace))
-    if(mousePos().y > topBuffer && mousePos().y < (topBuffer + height*tileSpace))
+  if(mousePos().x > (sideBuffer + sideGridBuffer) && mousePos().x < (sideBuffer*2 + sideGridBuffer*2 + width*tileSpace))
+    if(mousePos().y > (topBuffer + topGridBuffer) && mousePos().y < (topBuffer + topGridBuffer + bottomGridBuffer + height*tileSpace))
       return 1
   
   return 0
@@ -259,7 +259,7 @@ scene("minesweeper", () => {
     })
     
     onKeyPress("space", () => {
-		  post("new-game", [15, 15, 25])
+		  post("new-game", [6, 6, 4])
 	  })
 })
 

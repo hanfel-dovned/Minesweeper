@@ -19,24 +19,24 @@
     hc    ~(. +> bowl)
 ++  on-init
   ^-  (quip card _this)
-  :_  this(settings [5 5 7], game-state [0 %.n %.n], gameboard (generate-grid:hc 5 5 7))
+  :_  this(settings [5 5 7], game-state [0 %.n %.n], gameboard (generate-grid:hc 5 5 7), leaderboard 0)
   :~
     :*  %pass  /eyre/connect  %arvo  %e 
         %connect  `/apps/minesweeper  %minesweeper
     ==  
   ==
-::
+:: 
 ++  on-save
   ^-  vase
   !>(state)
 ::
 ++  on-load
-|=  old-state=vase
-^-  (quip card _this)
-=/  old  !<(versioned-state old-state)
-?-  -.old
-%0  `this(state old)
-==
+  |=  old-state=vase
+  ^-  (quip card _this)
+  =/  old  !<(versioned-state old-state)
+  ?-  -.old
+    %0  `this(state old)
+  ==
 ::
 ++  on-poke
   |=  [=mark =vase]
@@ -112,25 +112,28 @@
           %guess
         =/  pos  (add (mul y:act width:settings) x:act)
         =/  tile  (snag pos gameboard)
-        ?:  revealed:tile
-          `state
-        ?:  lose:game-state
-          `state
-        =/  newtile  ^+  tile
-          [%.y flagged:tile mine:tile neighbors:tile]
+        ?:  revealed:tile  `state
+        ?:  lose:game-state  `state
+        ?:  win:game-state  `state
+        =/  newboard  (reveal-neighbors gameboard pos width:settings)
         =/  loss  ?:(mine:tile %.y %.n)
         =/  victory
           ?:  loss  %.n
-          ?:  .=  (add +(reveals:game-state) mines:settings) 
+          ?:  .=  (add (count-reveals newboard) mines:settings) 
               (mul width:settings height:settings)
             %.y
           %.n
-        :: Really shouldn't increment reveals if loss=%.y,
-        :: but it shouldn't matter.    
+        =/  score  :(mul mines:settings width:settings height:settings)
+        =/  newleaderboard  
+          ?.  victory  leaderboard
+          ?:  (gth score leaderboard)
+            score
+          leaderboard
         :_
           %=  state
-            gameboard  (snap gameboard pos newtile)
-            game-state  [+(reveals:game-state) victory loss]
+            gameboard  newboard
+            game-state  [(count-reveals newboard) victory loss]
+            leaderboard  newleaderboard
           ==
         %-  send
         :+  200  ~
@@ -138,8 +141,8 @@
         %-  enjs-state
         :*  
             settings
-            [+(reveals:game-state) victory loss]
-            (snap gameboard pos newtile)
+            [(count-reveals newboard) victory loss]
+            newboard
         ==
         ::
           %flag
@@ -222,7 +225,7 @@
   |=  [width=@ud height=@ud mines=@ud]
   =/  empty-grid  (new-grid width height)
   =/  mines-grid  (place-mines empty-grid mines)
-  =/  final-grid  (calc-neighbors mines-grid width)
+  =/  final-grid  (fill-neighbors mines-grid width)
   final-grid
 ::
 ++  place-mines
@@ -251,7 +254,8 @@
     (snap grid pos mine-tile)
   grid
 ::
-++  calc-neighbors
+::  Fill in the grid's neighbor values.
+++  fill-neighbors
   |=  [=grid width=@ud]
   ^+  grid
   =/  size  (lent grid)
@@ -264,92 +268,121 @@
     grid  (tile-neighbors grid i width)
   ==
 ::
+::  Fill in one tile's neighbor values.
 ++  tile-neighbors
-  |=  [=grid i=@ud width=@ud]
-  ^+  grid
-  =/  n  0
-  =.  n  (add n (nbr-left grid i width))
-  =.  n  (add n (nbr-right grid i width))
-  =.  n  (add n (nbr-up grid i width))
-  =.  n  (add n (nbr-down grid i width))
-  =.  n  (add n (nbr-up-left grid i width))
-  =.  n  (add n (nbr-up-right grid i width))
-  =.  n  (add n (nbr-down-left grid i width))
-  =.  n  (add n (nbr-down-right grid i width))
-  =/  tile  (snag i grid)
-  (snap grid i [revealed:tile flagged:tile mine:tile n])
+  |=  [thegrid=grid pos=@ud w=@ud]
+  ^-  grid
+  =/  n  8
+  =/  nbr  neighbor  =.  nbr  nbr(grid thegrid, i pos, width w)
+  =.  n  ?~  (left:nbr)  (sub n 1)  (sub n mine:u:+:(left:nbr))
+  =.  n  ?~  (right:nbr)  (sub n 1)  (sub n mine:u:+:(right:nbr))
+  =.  n  ?~  (up:nbr)  (sub n 1)  (sub n mine:u:+:(up:nbr))
+  =.  n  ?~  (down:nbr)  (sub n 1)  (sub n mine:u:+:(down:nbr))
+  =.  n  ?~  (upleft:nbr)  (sub n 1)  (sub n mine:u:+:(upleft:nbr))
+  =.  n  ?~  (upright:nbr)  (sub n 1)  (sub n mine:u:+:(upright:nbr))
+  =.  n  ?~  (downleft:nbr)  (sub n 1)  (sub n mine:u:+:(downleft:nbr))
+  =.  n  ?~  (downright:nbr)  (sub n 1)  (sub n mine:u:+:(downright:nbr))
+  =/  tile  (snag pos thegrid)
+  (snap thegrid pos [revealed:tile flagged:tile mine:tile n])
 ::
-++  nbr-left
-  |=  [=grid i=@ud width=@ud]
-  ?:  =(0 (mymod i width))
-    0
-  ?:  =(%.y mine:(snag (sub i 1) grid))
-    1
-  0
+::  Count revealed tiles.
+++  count-reveals
+  |=  =grid
+  ^-  @ud
+  =/  count  0
+  =/  i  0
+  |-
+  ?:  =(i (lent grid))
+    count
+  %=  $
+    i  +(i)
+    count  ?:  revealed:(snag i grid)
+             +(count)
+           count
+  ==
+::  Recursively reveal neighboring tiles that aren't touching any mines.
+++  reveal-neighbors
+  |=  [thegrid=grid pos=@ud w=@ud]
+  ^-  grid
+  =/  tile  (snag pos thegrid)
+  =/  newtile  ^+  tile
+    [%.y flagged:tile mine:tile neighbors:tile]
+  =.  thegrid  (snap thegrid pos newtile)
+  ?:  (gth neighbors:(snag pos thegrid) 0)  
+    thegrid
+  =/  nbr  neighbor  =.  nbr  nbr(grid thegrid, i pos, width w)
+  =.  thegrid  ?~  (left:nbr)  thegrid
+    ?:  revealed:u:+:(left:nbr)  thegrid
+    (reveal-neighbors thegrid (sub pos 1) w)
+  =.  thegrid  ?~  (right:nbr)  thegrid
+    ?:  revealed:u:+:(right:nbr)  thegrid
+    (reveal-neighbors thegrid (add pos 1) w)
+  =.  thegrid  ?~  (up:nbr)  thegrid
+    ?:  revealed:u:+:(up:nbr)  thegrid
+    (reveal-neighbors thegrid (sub pos w) w)
+  =.  thegrid  ?~  (down:nbr)  thegrid
+    ?:  revealed:u:+:(down:nbr)  thegrid
+    (reveal-neighbors thegrid (add pos w) w)
+  =.  thegrid  ?~  (upleft:nbr)  thegrid
+    ?:  revealed:u:+:(upleft:nbr)  thegrid
+    (reveal-neighbors thegrid (sub (sub pos w) 1) w)
+  =.  thegrid  ?~  (upright:nbr)  thegrid
+    ?:  revealed:u:+:(upright:nbr)  thegrid
+    (reveal-neighbors thegrid (add (sub pos w) 1) w)
+  =.  thegrid  ?~  (downleft:nbr)  thegrid
+    ?:  revealed:u:+:(downleft:nbr)  thegrid
+    (reveal-neighbors thegrid (sub (add pos w) 1) w)
+  =.  thegrid  ?~  (downright:nbr)  thegrid
+    ?:  revealed:u:+:(downright:nbr)  thegrid
+    (reveal-neighbors thegrid (add (add pos w) 1) w)
+  thegrid
 ::
-++  nbr-right
-  |=  [=grid i=@ud width=@ud]
-  ?:  =((sub width 1) (mymod i width))
-    0
-  ?:  =(%.y mine:(snag (add i 1) grid))
-    1
-  0
-::
-++  nbr-up
-  |=  [=grid i=@ud width=@ud]
-  ?:  (lth i width)
-    0
-  ?:  =(%.y mine:(snag (sub i width) grid))
-    1
-  0
-::
-++  nbr-down
-  |=  [=grid i=@ud width=@ud]
-  ?:  (gte i (sub (lent grid) width))
-    0
-  ?:  =(%.y mine:(snag (add i width) grid))
-    1
-  0
-::
-++  nbr-up-left
-  |=  [=grid i=@ud width=@ud]
-  ?:  (lth i width)
-    0
-  ?:  =(0 (mymod i width))
-    0
-  ?:  =(%.y mine:(snag (sub (sub i width) 1) grid))
-    1
-  0
-::
-++  nbr-down-left
-  |=  [=grid i=@ud width=@ud]
-  ?:  (gte i (sub (lent grid) width))
-    0
-  ?:  =(0 (mymod i width))
-    0
-  ?:  =(%.y mine:(snag (sub (add i width) 1) grid))
-    1
-  0
-::
-++  nbr-down-right
-  |=  [=grid i=@ud width=@ud]
-  ?:  (gte i (sub (lent grid) width))
-    0
-  ?:  =((sub width 1) (mymod i width))
-    0
-  ?:  =(%.y mine:(snag (add (add i width) 1) grid))
-    1
-  0
-::
-++  nbr-up-right
-  |=  [=grid i=@ud width=@ud]
-  ?:  (lth i width)
-    0
-  ?:  =((sub width 1) (mymod i width))
-    0
-  ?:  =(%.y mine:(snag (add (sub i width) 1) grid))
-    1
-  0
+++  neighbor
+  |_  [=grid i=@ud width=@ud]
+  ++  left
+    |=  @  ^-  (unit tile)
+    ?:  =(0 (mymod i width))  ~
+    [~ (snag (sub i 1) grid)]
+  ::
+  ++  right
+    |=  @  ^-  (unit tile)
+    ?:  =((sub width 1) (mymod i width))  ~
+    [~ (snag (add i 1) grid)]
+  ::
+  ++  up
+    |=  @  ^-  (unit tile)
+    ?:  (lth i width)  ~
+    [~ (snag (sub i width) grid)]
+  ::
+  ++  down
+    |=  @  ^-  (unit tile)
+    ?:  (gte i (sub (lent grid) width))  ~
+    [~ (snag (add i width) grid)]
+  ::
+  ++  upleft
+    |=  @  ^-  (unit tile)
+    ?:  (lth i width)  ~
+    ?:  =(0 (mymod i width))  ~
+    [~ (snag (sub (sub i width) 1) grid)]
+  ::
+  ++  downleft
+    |=  @  ^-  (unit tile)
+    ?:  (gte i (sub (lent grid) width))  ~
+    ?:  =(0 (mymod i width))  ~
+    [~ (snag (sub (add i width) 1) grid)]
+  ::
+  ++  downright
+    |=  @  ^-  (unit tile)
+    ?:  (gte i (sub (lent grid) width))  ~
+    ?:  =((sub width 1) (mymod i width))  ~
+    [~ (snag (add (add i width) 1) grid)]
+  ::
+  ++  upright
+    |=  @  ^-  (unit tile)
+    ?:  (lth i width)  ~
+    ?:  =((sub width 1) (mymod i width))  ~
+    [~ (snag (add (sub i width) 1) grid)]
+  --
 ::
 ++  new-grid
   |=  [width=@ud height=@ud]
