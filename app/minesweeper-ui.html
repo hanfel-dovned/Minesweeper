@@ -14,13 +14,14 @@
 			width: 100%;
 			height: 100%;
 			overflow: hidden;
+      background-color: var(--rlm-card-color);
 		}
 		canvas {
 			display: block;
-            padding-left: 0;
-            padding-right: 0;
-            margin-left: auto;
-            margin-right: auto;
+      padding-left: 0;
+      padding-right: 0;
+      margin-left: auto;
+      margin-right: auto;
 		}
 	</style>
 </head>
@@ -92,19 +93,27 @@ kaboom({
 function drawGrid()
 {
 
-  var gridColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
-  gridColor = gridColor.substring(4, gridColor.length-1)
+  onDraw(() => {
+
+    var gridColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
+    gridColor = gridColor.substring(4, gridColor.length-1)
                         .replace(/ /g, '')
                         .split(',');
 
-  onDraw(() => {
+    drawRect({
+      pos: vec2(0, 0),
+      width: sideGridBuffer * 2 + tileSpace * width,
+      height: topBuffer + topGridBuffer + bottomGridBuffer + tileSpace * height,
+      color: rgb(gridColor[0], gridColor[1], gridColor[2]),
+    })
+
     drawRect({
       pos: vec2(sideBuffer, topBuffer),
       width: sideGridBuffer * 2 + tileSpace * width,
       height: topGridBuffer + bottomGridBuffer + tileSpace * height,
-      color: rgb(240, 240, 240), //rgb(gridColor[0], gridColor[1], gridColor[2]),
+      color: rgb(230, 230, 230),
       radius: 6,
-      outline: {width: 1, color: rgb(230, 230, 230)}
+      outline: {width: 1, color: rgb(210, 210, 210)}
     })
 
     for(var j = 0; j < height; j++) 
@@ -116,7 +125,7 @@ function drawGrid()
       drawText({
             text: "YOU LOSE",
             font: "apl386",
-            pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topGridBuffer),
+            pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topBuffer/2),
             origin: "center",
             size: 50,
             color: rgb(0, 0, 150)
@@ -127,7 +136,7 @@ function drawGrid()
       drawText({
             text: "YOU WIN!",
             font: "apl386",
-            pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topGridBuffer),
+            pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topBuffer/2),
             origin: "center",
             size: 50,
             color: rgb(150, 0, 0)
@@ -263,7 +272,7 @@ scene("minesweeper", () => {
     })
     
     onKeyPress("space", () => {
-		  post("new-game", [10, 10, 10])
+		  post("new-game", [20, 20, 10])
 	  })
 })
 
