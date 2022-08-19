@@ -31,13 +31,13 @@
 
 import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
 
-const windowWidth = document.documentElement.clientWidth
+/*const windowWidth = document.documentElement.clientWidth
 const windowHeight = document.documentElement.clientHeight
-const gameWidth = 1200
+const gameWidth = 700
 const gameHeight = 700
 const scaleX = windowWidth / gameWidth
 const scaleY = windowHeight / gameHeight 
-const scaleGame = Math.min(scaleX, scaleY)
+const scaleGame = Math.min(scaleX, scaleY)*/
 
 async function getState() {
         const response = await fetch('/apps/minesweeper/state')
@@ -80,8 +80,17 @@ var topGridBuffer = 14
 var sideGridBuffer = 14
 var bottomGridBuffer = sideGridBuffer
 
-var tileSize = 30
-var tileSpace = tileSize + 5
+var gameHeight = 600
+
+var tileSize = (gameHeight - topBuffer - bottomGridBuffer)/height
+//var tileSize = 40
+
+var tileSpace = tileSize + tileSize/8
+var tileRadius = 0
+
+var shadowDistance = 2
+if(tileSize < 20)
+  shadowDistance = 1
 
 kaboom({
     width: width * tileSpace + sideGridBuffer * 2 + sideBuffer * 2,
@@ -95,8 +104,8 @@ function drawGrid()
 
   onDraw(() => {
 
-    var gridColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
-    gridColor = gridColor.substring(4, gridColor.length-1)
+    var backColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
+    backColor = backColor.substring(4, backColor.length-1)
                         .replace(/ /g, '')
                         .split(',');
 
@@ -104,21 +113,25 @@ function drawGrid()
       pos: vec2(0, 0),
       width: sideGridBuffer * 2 + tileSpace * width,
       height: topBuffer + topGridBuffer + bottomGridBuffer + tileSpace * height,
-      color: rgb(gridColor[0], gridColor[1], gridColor[2]),
+      color: rgb(backColor[0], backColor[1], backColor[2]),
     })
+
+    var gridColor = rgb(238, 238, 238)
+    if(backColor[0] < 200)
+      gridColor = rgb(188, 198, 208)
 
     drawRect({
       pos: vec2(sideBuffer, topBuffer),
       width: sideGridBuffer * 2 + tileSpace * width,
       height: topGridBuffer + bottomGridBuffer + tileSpace * height,
-      color: rgb(230, 230, 230),
+      color: gridColor,
       radius: 6,
-      outline: {width: 1, color: rgb(210, 210, 210)}
+      outline: {width: 1, color: rgb(207, 207, 207)}
     })
 
     for(var j = 0; j < height; j++) 
       for(var i = 0; i < width; i++) 
-        drawTile(sideBuffer + sideGridBuffer + i * tileSpace, topBuffer + topGridBuffer + j * tileSpace, grid[j*width + i])
+        drawTile(sideBuffer + sideGridBuffer + i * tileSpace, topBuffer + topGridBuffer + j * tileSpace, grid[j*width + i], backColor)
 
     if(lose == 1)
     {
@@ -146,7 +159,7 @@ function drawGrid()
   })
 }
 
-function drawTile(x, y, tile)
+function drawTile(x, y, tile, backColor)
 {
     var revealed = tile[0]
     var flagged = tile[1]
@@ -155,25 +168,40 @@ function drawTile(x, y, tile)
 
     var textColor = rgb(0, 0, 0)
     
-    var tileColor = rgb(200, 200, 200)
+    var tileColor = rgb(207, 207, 207)
+    var shadowColor = rgb(140, 140, 140)
+
+    if(backColor[0] < 200)
+    {
+      tileColor = rgb(147, 157, 167)
+      shadowColor = rgb(90, 90, 90)
+    }
+
     if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && lose == 0 && win == 0 && (isMouseDown() || isMouseDown("right")))
-      tileColor = rgb(180, 180, 180)
+      tileColor = rgb(150, 150, 160)
+
+    var shadowRect = {
+        pos: vec2(x + shadowDistance, y + shadowDistance),
+        width: tileSize,
+        height: tileSize,
+        color: shadowColor,
+        radius: tileRadius
+      }
+
+    var tileRect = {
+        pos: vec2(x, y),
+        width: tileSize,
+        height: tileSize,
+        color: tileColor,
+        radius: tileRadius
+      }
 
     if(revealed == 0 || mine == 1)
     {
-        drawRect({
-          pos: vec2(x + 2, y + 2),
-          width: tileSize,
-          height: tileSize,
-          color: rgb(70, 70, 70),
-        })
-        drawRect({
-          pos: vec2(x, y),
-          width: tileSize,
-          height: tileSize,
-          color: tileColor,
-          //outline: {width: 1, color: rgb(0, 0, 0)}
-        })
+        if(tileSize > 10)
+          drawRect(shadowRect)
+        
+        drawRect(tileRect)
     }
     if(revealed == 1 && neighbors > 0 && mine == 0)
     {
@@ -218,13 +246,9 @@ function drawTile(x, y, tile)
 
     if((lose == 1 || win == 1) && mine == 1)
     {
-      drawCircle({
-        pos: vec2(x + tileSize*.5, y + tileSize*.5),
-        radius: tileSize*.25,
-        color: rgb(0, 0, 0),
-      })
+      drawMine(x, y)
     }
-    if(flagged == 1 && revealed == 0)
+    if(flagged == 1 && revealed == 0 && lose == 0)
     {
       drawTriangle({
           p1: vec2(x + tileSize*.5, y + tileSize*.33),
@@ -234,6 +258,46 @@ function drawTile(x, y, tile)
           color: rgb(250, 0, 0),
       })
     }
+}
+
+function drawMine(x, y) {
+  drawLine({
+        p1: vec2(x + tileSize*.5, y + tileSize*.2),
+        p2: vec2(x + tileSize*.5, y + tileSize*.8),
+        width: 2,
+        color: rgb(0, 0, 0),
+    })
+    drawLine({
+        p1: vec2(x + tileSize*.2, y + tileSize*.5),
+        p2: vec2(x + tileSize*.8, y + tileSize*.5),
+        width: 2,
+        color: rgb(0, 0, 0),
+    })
+    drawLine({
+        p1: vec2(x + tileSize*.28, y + tileSize*.28),
+        p2: vec2(x + tileSize*.72, y + tileSize*.72),
+        width: 2,
+        color: rgb(0, 0, 0),
+    })
+    drawLine({
+        p1: vec2(x + tileSize*.28, y + tileSize*.72),
+        p2: vec2(x + tileSize*.72, y + tileSize*.28),
+        width: 2,
+        color: rgb(0, 0, 0),
+    })
+  drawCircle({
+        pos: vec2(x + tileSize*.5, y + tileSize*.5),
+        radius: tileSize*.25,
+        color: rgb(0, 0, 0),
+      })
+
+  drawCircle({
+      pos: vec2(x + tileSize*.43, y + tileSize*.43),
+      radius: tileSize*.05,
+      color: rgb(255, 255, 255),
+    })
+
+    
 }
 
 function getTileFromMouse() {
@@ -272,7 +336,7 @@ scene("minesweeper", () => {
     })
     
     onKeyPress("space", () => {
-		  post("new-game", [20, 20, 10])
+		  post("new-game", [20, 15, 80])
 	  })
 })
 

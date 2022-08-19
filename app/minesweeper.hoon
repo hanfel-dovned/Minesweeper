@@ -254,7 +254,7 @@
     (snap grid pos mine-tile)
   grid
 ::
-::  Fill in the grid's neighbor values.
+::  Fill in the grid's neighbor values. 
 ++  fill-neighbors
   |=  [=grid width=@ud]
   ^+  grid
