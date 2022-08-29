@@ -98,6 +98,8 @@ var bottomGridBuffer = sideGridBuffer
 var gameHeight = 600
 
 var tileSize = (gameHeight - topBuffer - bottomGridBuffer)/height
+if(tileSize > 40)
+  tileSize = 40
 //var tileSize = 40
 
 var tileSpace = tileSize + tileSize/8
@@ -110,6 +112,8 @@ if(tileSize < 20)
 kaboom({
     width: width * tileSpace + sideGridBuffer * 2 + sideBuffer * 2,
     height: height * tileSpace + topGridBuffer + bottomGridBuffer + topBuffer,
+    //width: 600,
+    //height: 600,
     //scale: scaleGame,
     background: [255, 255, 255]
 })
@@ -462,9 +466,6 @@ scene("minesweeper", () => {
         post("flag", getTileFromMouse())
     })
     
-    onKeyPress("space", () => {
-		  post("new-game", [20, 15, 80])
-	  })
 })
 
 go("minesweeper")
@@ -474,7 +475,7 @@ function addButton(txt, p, f) {
 
   console.log('added')
     const btn = add([
-        text(txt, {font: "apl386", size: 50}),
+        text(txt, {font: "apl386", size: 20}),
         pos(p),
         area({ cursor: "default", }),
         scale(1),
@@ -525,62 +526,96 @@ scene("newgame", () => {
 
   var midpoint = (sideGridBuffer * 2 + tileSpace * width)/2
 
+  var triangleLeft = midpoint - 20
+  var triangleWidth = 100
+
+  var vals = [10, 10, 30]
+  var maxs = [60, 30, 50]
 
   onDraw(() => {
-
-
-    /*drawText({
-        text: "or",
-        font: "apl386",
-        pos: vec2(midpoint, topBuffer*2),
-        origin: "center",
-        size: 30,
-        color: rgb(150, 0, 0)
-    })*/
 
     drawText({
         text: "WIDTH:",
         font: "apl386",
-        pos: vec2(midpoint, topBuffer*3),
+        pos: vec2(midpoint - 50, topBuffer),
         origin: "right",
-        size: 50,
+        size: 20,
         color: rgb(0, 0, 150)
     })
 
     drawText({
         text: "HEIGHT:",
         font: "apl386",
-        pos: vec2(midpoint, topBuffer*4),
+        pos: vec2(midpoint - 50, topBuffer*2),
         origin: "right",
-        size: 50,
+        size: 20,
         color: rgb(0, 0, 150)
     })
 
     drawText({
         text: "MINES:",
         font: "apl386",
-        pos: vec2(midpoint, topBuffer*5),
+        pos: vec2(midpoint - 50, topBuffer*3),
         origin: "right",
-        size: 50,
+        size: 20,
         color: rgb(0, 0, 150)
     })
 
     for(var i = 0; i < 3; i++)
     {
       drawTriangle({
-            p1: vec2(midpoint + 10, topBuffer*(3+i) + 10),
-            p2: vec2(midpoint + 200, topBuffer*(3+i) + 10),
-            p3: vec2(midpoint + 200, topBuffer*(3+i) - 30),
-            pos: vec2(0, 0),
-            color: rgb(0, 0, 150)
+        p1: vec2(triangleLeft, topBuffer*(1+i) + 5),
+        p2: vec2(triangleLeft + triangleWidth, topBuffer*(1+i) + 5),
+        p3: vec2(triangleLeft + triangleWidth, topBuffer*(1+i) - 15),
+        pos: vec2(0, 0),
+        color: rgb(0, 0, 150)
+      })
+
+      drawRect({
+        pos: vec2(triangleLeft + vals[i]*triangleWidth/maxs[i], topBuffer*(1+i) - 15),
+        width: 5,
+        height: 20,
+        color: rgb(0, 0, 0),
+      })
+
+      drawText({
+        text: vals[i],
+        font: "apl386",
+        pos: vec2(triangleLeft + triangleWidth + 10, topBuffer*(1+i)),
+        origin: "left",
+        size: 20,
+        color: rgb(0, 0, 150)
       })
     }
 
-
   })
 
-  addButton("GENERATE NEW BOARD", vec2(midpoint, topBuffer*6), () => go("minesweeper"))
-  addButton("RETURN TO GAME", vec2(midpoint, topBuffer*1.5), () => go("minesweeper"))
+  addButton("GENERATE NEW BOARD", vec2(midpoint, topBuffer*3.5), () => post("new-game", [vals[0], vals[1], vals[2]]))
+  addButton("RETURN TO GAME", vec2(midpoint, topBuffer*.5), () => go("minesweeper"))
+
+  onMouseDown(() => {
+      maxs[2] = Math.ceil(vals[0]*vals[1]*.5)
+      if(vals[2] > maxs[2])
+        vals[2] = maxs[2]
+
+      if(mousePos().x >= triangleLeft && mousePos().x <= triangleLeft + triangleWidth)
+      {
+          for(var i = 0; i < 3; i++)
+          {
+              if(mousePos().y > topBuffer*(1+i) - 15 && mousePos().y < topBuffer*(1+i) + 5)
+                vals[i] = Math.ceil((mousePos().x - triangleLeft)/triangleWidth*maxs[i])
+                
+              if(vals[0] < 5)
+                vals[0] = 5
+              if(vals[1] < 5)
+                vals[1] = 5
+              if(vals[2] < 1)
+                vals[2] = 1
+
+          }
+      }
+    })
+
 
 })
 
