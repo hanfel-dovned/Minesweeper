@@ -88,14 +88,14 @@ function flagCount()
 
 var flags = flagCount()
 
-var topBuffer = 80
+var topBuffer = 50
 var sideBuffer = 0
 
 var topGridBuffer = 14
 var sideGridBuffer = 14
 var bottomGridBuffer = sideGridBuffer
 
-var gameHeight = 600
+var gameHeight = 650
 
 var tileSize = (gameHeight - topBuffer - bottomGridBuffer)/height
 //var tileSize = 40
@@ -525,34 +525,15 @@ scene("newgame", () => {
   var triangleLeft = midpoint - 10
   var triangleWidth = 200
 
-  var vals = [10, 10, 30]
-  var maxs = [60, 30, 50]
+  var vals = [10, 30]
+  var maxs = [30, 50]
+  var mins = [10, 1]
 
   onDraw(() => {
-
-
-    /*drawText({
-        text: "or",
-        font: "apl386",
-        pos: vec2(midpoint, topBuffer*2),
-        origin: "center",
-        size: 30,
-        color: rgb(150, 0, 0)
-    })*/
-
     drawText({
-        text: "WIDTH:",
+        text: "SIZE:",
         font: "apl386",
-        pos: vec2(midpoint, topBuffer*3),
-        origin: "right",
-        size: 50,
-        color: rgb(0, 0, 150)
-    })
-
-    drawText({
-        text: "HEIGHT:",
-        font: "apl386",
-        pos: vec2(midpoint, topBuffer*4),
+        pos: vec2(midpoint - 10, topBuffer*4),
         origin: "right",
         size: 50,
         color: rgb(0, 0, 150)
@@ -561,24 +542,24 @@ scene("newgame", () => {
     drawText({
         text: "MINES:",
         font: "apl386",
-        pos: vec2(midpoint, topBuffer*5),
+        pos: vec2(midpoint - 10, topBuffer*5),
         origin: "right",
         size: 50,
         color: rgb(0, 0, 150)
     })
 
-    for(var i = 0; i < 3; i++)
+    for(var i = 0; i < 2; i++)
     {
       drawTriangle({
-        p1: vec2(triangleLeft, topBuffer*(3+i) + 10),
-        p2: vec2(triangleLeft + triangleWidth, topBuffer*(3+i) + 10),
-        p3: vec2(triangleLeft + triangleWidth, topBuffer*(3+i) - 30),
+        p1: vec2(triangleLeft + mins[i]*triangleWidth/maxs[i], topBuffer*(4+i) + 10),
+        p2: vec2(triangleLeft + triangleWidth, topBuffer*(4+i) + 10),
+        p3: vec2(triangleLeft + triangleWidth, topBuffer*(4+i) - 30),
         pos: vec2(0, 0),
         color: rgb(0, 0, 150)
       })
 
       drawRect({
-        pos: vec2(triangleLeft + vals[i]*triangleWidth/maxs[i], topBuffer*(3+i) - 30),
+        pos: vec2(triangleLeft + vals[i]*triangleWidth/maxs[i], topBuffer*(4+i) - 30),
         width: 5,
         height: 40,
         color: rgb(0, 0, 0),
@@ -587,7 +568,7 @@ scene("newgame", () => {
       drawText({
         text: vals[i],
         font: "apl386",
-        pos: vec2(triangleLeft + triangleWidth + 10, topBuffer*(3+i)),
+        pos: vec2(triangleLeft + triangleWidth + 10, topBuffer*(4+i)),
         origin: "left",
         size: 40,
         color: rgb(0, 0, 150)
@@ -596,28 +577,26 @@ scene("newgame", () => {
 
   })
 
-  addButton("GENERATE NEW BOARD", vec2(midpoint, topBuffer*6), () => post("new-game", [vals[0], vals[1], vals[2]]))
-  addButton("RETURN TO GAME", vec2(midpoint, topBuffer*.5), () => go("minesweeper"))
+  addButton("GENERATE NEW BOARD", vec2(midpoint, topBuffer*6), () => post("new-game", [vals[0] + 10, vals[0] + 10, vals[1]]))
+  addButton("RETURN TO GAME", vec2(midpoint, topBuffer*1), () => go("minesweeper"))
 
   onMouseDown(() => {
-      maxs[2] = Math.ceil(vals[0]*vals[1]*.5)
-      if(vals[2] > maxs[2])
-        vals[2] = maxs[2]
+      maxs[1] = Math.ceil(vals[0]*vals[0]*.5)
+      if(vals[1] > maxs[1])
+        vals[1] = maxs[1]
 
-      if(mousePos().x >= triangleLeft && mousePos().x <= triangleLeft + triangleWidth)
+      if(mousePos().x >= triangleLeft - 10 && mousePos().x <= triangleLeft + triangleWidth + 10)
       {
-          for(var i = 0; i < 3; i++)
+          for(var i = 0; i < 2; i++)
           {
-              if(mousePos().y > topBuffer*(3+i) - 30 && mousePos().y < topBuffer*(3+i) + 10)
+              if(mousePos().y > topBuffer*(4+i) - 30 && mousePos().y < topBuffer*(4+i) + 10)
                 vals[i] = Math.ceil((mousePos().x - triangleLeft)/triangleWidth*maxs[i])
                 
-              if(vals[0] < 5)
-                vals[0] = 5
-              if(vals[1] < 5)
-                vals[1] = 5
-              if(vals[2] < 1)
-                vals[2] = 1
+              if(vals[i] < mins[i])
+                vals[i] = mins[i]
 
+              if(vals[i] > maxs[i])
+                vals[i] = maxs[i]
           }
       }
     })

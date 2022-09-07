@@ -238,19 +238,19 @@
     grid
   %=  $
     i  +(i)
-    grid  (roll-for-mine grid i)
-    minecount  ?:  =(grid (roll-for-mine grid i))
+    grid  (roll-for-mine grid i minecount minetotal)
+    minecount  ?:  =(grid (roll-for-mine grid i minecount minetotal))
                  minecount
                +(minecount)
   ==
 ::
 ++  roll-for-mine
-  |=  [=grid i=@ud]
+  |=  [=grid i=@ud minecount=@ud minetotal=@ud]
   ^+  grid
   =/  size  (lent grid)
   =/  pos  (mymod i size)
-  =/  dice-roll  (~(rad og (add eny:bowl i)) size)
-  ?:  (lte dice-roll 1)
+  =/  dice-roll  (~(rad og (add eny:bowl i)) (sub size i))
+  ?:  (lte dice-roll (sub minetotal minecount))
     (snap grid pos mine-tile)
   grid
 ::
