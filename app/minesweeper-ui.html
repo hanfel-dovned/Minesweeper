@@ -577,7 +577,7 @@ scene("newgame", () => {
 
   })
 
-  addButton("GENERATE NEW BOARD", vec2(midpoint, topBuffer*6), () => post("new-game", [vals[0] + 10, vals[0] + 10, vals[1]]))
+  addButton("GENERATE NEW BOARD", vec2(midpoint, topBuffer*6), () => post("new-game", [vals[0], vals[0], vals[1]]))
   addButton("RETURN TO GAME", vec2(midpoint, topBuffer*1), () => go("minesweeper"))
 
   onMouseDown(() => {

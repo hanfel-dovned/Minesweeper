@@ -19,11 +19,17 @@
     hc    ~(. +> bowl)
 ++  on-init
   ^-  (quip card _this)
-  :_  this(settings [5 5 7], game-state [0 %.n %.n], gameboard (generate-grid:hc 5 5 7), leaderboard 0)
+  :_  %=  this
+        settings  [10 10 10]
+        game-state  [0 %.n %.n]
+        gameboard  (generate-grid:hc [10 10 10])
+        leaderboard  (malt ~[[our.bowl [0 ~]]])
+      ==
   :~
     :*  %pass  /eyre/connect  %arvo  %e 
         %connect  `/apps/minesweeper  %minesweeper
-    ==  
+    ==
+    :: TO-DO - Connect to the spaces agent on the /updates path
   ==
 :: 
 ++  on-save
@@ -124,16 +130,16 @@
             %.y
           %.n
         =/  score  :(mul mines:settings width:settings height:settings)
-        =/  newleaderboard  
+        =/  profile  +:(~(get by leaderboard) our.bowl)
+        =.  leaderboard  
           ?.  victory  leaderboard
-          ?:  (gth score leaderboard)
-            score
+          ?:  (gth score -:profile)
+            (~(put by leaderboard) our.bowl [score +:profile])
           leaderboard
         :_
           %=  state
             gameboard  newboard
             game-state  [(count-reveals newboard) victory loss]
-            leaderboard  newleaderboard
           ==
         %-  send
         :+  200  ~
@@ -216,10 +222,20 @@
 ++  on-leave  on-leave:def
 ++  on-peek   on-peek:def
 ++  on-agent  on-agent:def
+::  /updates
+::    join space: subscribe to spaces/space and add it as a tag to me
+::    leave space: unsubscribe from spaces/space and remove it as a tag from everyone
+::  /spaces/space
+::    new member joins: add them to my leaderboard with that space tag (or just append tag), subscribe to their minesweeper agent
+::    member leaves: remove that space tag from them
+::  /minesweeper
+::    new high score: update that entry on leaderboard
 ++  on-arvo   on-arvo:def
 ++  on-fail   on-fail:def
 --
 ::
+:: Why did I make this a door?
+:: Couldn't it just be a core? Does it need the bowl?
 |_  =bowl:gall
 ++  generate-grid
   |=  [width=@ud height=@ud mines=@ud]
