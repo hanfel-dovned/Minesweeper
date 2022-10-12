@@ -290,6 +290,9 @@ function drawTile(x, y, tile, backColor)
 }
 
 function drawMine(x, y) {
+  if(x = (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2) //hacky way to draw the menu button easily
+    tileSize = topBuffer * .5;
+
   drawLine({
         p1: vec2(x + tileSize*.5, y + tileSize*.2),
         p2: vec2(x + tileSize*.5, y + tileSize*.8),
@@ -326,7 +329,8 @@ function drawMine(x, y) {
       color: rgb(255, 255, 255),
     })
 
-    
+    tileSize = (gameHeight - topBuffer - bottomGridBuffer)/height
+    //set tilesize back to normal after the menu button hack
 }
 
 function getTileFromMouse() {
@@ -372,16 +376,16 @@ function drawButtons()
 
     drawRect({
         pos: vec2(leftx + 2, y + 2),
-        width: tileSize,
-        height: tileSize,
+        width: topBuffer *.5,
+        height: topBuffer *.5,
         color: shadowColor,
         radius: tileRadius
     })
 
     drawRect({
         pos: vec2(leftx, y),
-        width: tileSize,
-        height: tileSize,
+        width: topBuffer *.5,
+        height: topBuffer *.5,
         color: tileColor,
         radius: tileRadius
     })
@@ -399,24 +403,24 @@ function drawButtons()
 
     drawRect({
         pos: vec2(rightx + 2, y + 2),
-        width: tileSize,
-        height: tileSize,
+        width: topBuffer *.5,
+        height: topBuffer *.5,
         color: shadowColor,
         radius: tileRadius
     })
 
     drawRect({
         pos: vec2(rightx, y),
-        width: tileSize,
-        height: tileSize,
+        width: topBuffer *.5,
+        height: topBuffer *.5,
         color: tileColor,
         radius: tileRadius
       })
 
       drawTriangle({
-          p1: vec2(rightx + tileSize*.5, y + tileSize*.33),
-          p2: vec2(rightx + tileSize *.33, y + tileSize*.66),
-          p3: vec2(rightx + tileSize *.66, y + tileSize*.66),
+          p1: vec2(rightx + topBuffer *.5*.5, y + topBuffer *.5*.33),
+          p2: vec2(rightx + topBuffer *.5 *.33, y + topBuffer *.5*.66),
+          p3: vec2(rightx + topBuffer *.5 *.66, y + topBuffer *.5*.66),
           pos: vec2(0, 0),
           color: rgb(250, 0, 0),
       })
@@ -469,7 +473,6 @@ go("minesweeper")
 
 function addButton(txt, p, f) {
 
-  console.log('added')
     const btn = add([
         text(txt, {font: "apl386", size: 50}),
         pos(p),
@@ -578,7 +581,7 @@ scene("newgame", () => {
   })
 
   addButton("GENERATE NEW BOARD", vec2(midpoint, topBuffer*6), () => post("new-game", [vals[0], vals[0], vals[1]]))
-  addButton("RETURN TO GAME", vec2(midpoint, topBuffer*1), () => go("minesweeper"))
+  addButton("RETURN TO GAME", vec2(midpoint, topBuffer*.5), () => go("minesweeper"))
 
   onMouseDown(() => {
       maxs[1] = Math.ceil(vals[0]*vals[0]*.5)
