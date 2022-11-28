@@ -1,4 +1,4 @@
-/-  *minesweeper
+/-  *minesweeper, spaces-store
 /+  default-agent, dbug, server, schooner
 /*  minesweeper-ui  %html  /app/minesweeper-ui/html
 |%
@@ -23,13 +23,15 @@
         settings  [10 10 10]
         game-state  [0 %.n %.n]
         gameboard  (generate-grid:hc [10 10 10])
-        leaderboard  (malt ~[[our.bowl [0 ~]]])
+        leaderboard  (malt ~[[our.bowl 0]])
       ==
   :~
     :*  %pass  /eyre/connect  %arvo  %e 
         %connect  `/apps/minesweeper  %minesweeper
     ==
-    :: TO-DO - Connect to the spaces agent on the /updates path
+    :*  %pass  /spaces-updates  %agent
+        [our.bowl %spaces]  %watch  /updates
+    ==  
   ==
 :: 
 ++  on-save
@@ -71,6 +73,7 @@
       [(send [405 ~ [%stock ~]]) state]
       ::
         %'GET'
+      ~&  site
       ?+  site  :_  state 
                 %-  send
                 :+  404
@@ -130,11 +133,11 @@
             %.y
           %.n
         =/  score  :(mul mines:settings width:settings height:settings)
-        =/  profile  +:(~(get by leaderboard) our.bowl)
+        =/  hiscore  (~(got by leaderboard) our.bowl)
         =.  leaderboard  
           ?.  victory  leaderboard
-          ?:  (gth score -:profile)
-            (~(put by leaderboard) our.bowl [score +:profile])
+          ?:  (gth score hiscore)
+            (~(put by leaderboard) our.bowl score)
           leaderboard
         :_
           %=  state
@@ -221,21 +224,59 @@
   ==
 ++  on-leave  on-leave:def
 ++  on-peek   on-peek:def
-++  on-agent  on-agent:def
+++  on-agent
+  |=  [=wire =sign:agent:gall]
+  ^-  (quip card _this)
+  ?+    wire  (on-agent:def wire sign)
+      [%spaces-updates ~]
+    ?+    -.sign  (on-agent:def wire sign)
+        %fact
+      ?+    p.cage.sign  (on-agent:def wire sign)
+          %spaces-reaction
+        =/  reaction  !<(reaction:spaces-store q.cage.sign)
+        ?+    -.reaction  (on-agent:def wire sign)
+            %add
+          =/  members  ~(tap by members:reaction)
+          :-
+          %+  turn  members
+          |=  [k=@p v=*]
+          :*
+            %pass  /updates/in
+            %agent  [k %minesweeper]
+            %watch  /updates/out
+          ==
+          %=  this
+            leaderboard
+            |-
+            ?~  members
+              leaderboard
+            %=  $
+                leaderboard  %-  
+                             ~(put by leaderboard)
+                             [-<.members 0]
+                members  +.members
+            ==
+          ==
+        ==
+      ==
+    ==
+  ==
 ::  /updates
-::    join space: subscribe to spaces/space and add it as a tag to me
-::    leave space: unsubscribe from spaces/space and remove it as a tag from everyone
+::    join space: 
+::        subscribe to spaces/space
+::        scry members and subscribe to their minesweeper agents (or will this come as a response when I join?)
+::    leave space: unsubscribe from spaces/space?
 ::  /spaces/space
-::    new member joins: add them to my leaderboard with that space tag (or just append tag), subscribe to their minesweeper agent
-::    member leaves: remove that space tag from them
+::    new member joins: add them to my leaderboard, subscribe to their minesweeper agent
 ::  /minesweeper
 ::    new high score: update that entry on leaderboard
 ++  on-arvo   on-arvo:def
 ++  on-fail   on-fail:def
 --
 ::
-:: Why did I make this a door?
-:: Couldn't it just be a core? Does it need the bowl?
+::  Why did I make this a door?
+::  Couldn't it just be a core? 
+::  Dost need the bowl anymore?
 |_  =bowl:gall
 ++  generate-grid
   |=  [width=@ud height=@ud mines=@ud]
