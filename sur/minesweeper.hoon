@@ -9,4 +9,7 @@
       [%guess x=@ud y=@ud]
       [%flag x=@ud y=@ud]
   ==
++$  update
+  $%  [%hiscore score=@ud]
+  ==
 --

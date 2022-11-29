@@ -139,20 +139,28 @@
           ?:  (gth score hiscore)
             (~(put by leaderboard) our.bowl score)
           leaderboard
+        =/  eyre-cards
+          %-  send
+          :+  200  ~
+          :-  %json 
+          %-  enjs-state
+          :*  
+              settings
+              [(count-reveals newboard) victory loss]
+              newboard
+          ==
         :_
           %=  state
             gameboard  newboard
             game-state  [(count-reveals newboard) victory loss]
           ==
-        %-  send
-        :+  200  ~
-        :-  %json 
-        %-  enjs-state
-        :*  
-            settings
-            [(count-reveals newboard) victory loss]
-            newboard
-        ==
+        ?.  (gth score hiscore)
+          eyre-cards
+        %+  weld  
+          :~  :*  %give  %fact  ~[/updates/out]  %minesweeper-update 
+                  !>(`update`hiscore+score)
+          ==  ==
+        eyre-cards
         ::
           %flag
         =/  pos  (add (mul y:act width:settings) x:act)
@@ -221,6 +229,14 @@
   ?+    path  (on-watch:def path)
       [%http-response *]
     `this
+    ::
+      [%updates %out ~]
+    ?<  =(src.bowl our.bowl)
+    :_  this
+    :~  :*  %give  %fact  ~  %minesweeper-update
+            !>(`update`hiscore+(~(got by leaderboard) our.bowl))
+        ==
+    ==
   ==
 ++  on-leave  on-leave:def
 ++  on-peek   on-peek:def
@@ -229,22 +245,35 @@
   ^-  (quip card _this)
   ?+    wire  (on-agent:def wire sign)
       [%spaces-updates ~]
+    ~&  sign
     ?+    -.sign  (on-agent:def wire sign)
         %fact
       ?+    p.cage.sign  (on-agent:def wire sign)
+          %visa-reaction
+        `this
+        ::
           %spaces-reaction
         =/  reaction  !<(reaction:spaces-store q.cage.sign)
         ?+    -.reaction  (on-agent:def wire sign)
+        ::  Need to handle %initial here
             %add
           =/  members  ~(tap by members:reaction)
           :-
-          %+  turn  members
-          |=  [k=@p v=*]
-          :*
-            %pass  /updates/in
-            %agent  [k %minesweeper]
-            %watch  /updates/out
-          ==
+            %+  snoc
+              ^-  (list card)
+              %+  turn  members
+              |=  [k=@p v=*]
+              :*
+                %pass  /updates/in
+                %agent  [k %minesweeper]
+                %watch  /updates/out
+              ==
+            ^-  card
+            :*
+              %pass  /new-members
+              %agent  [our.bowl %spaces]
+              %watch  /spaces/(scot %p ship:path:space:reaction)/(scot %tas space:path:space:reaction)
+            ==
           %=  this
             leaderboard
             |-
@@ -260,23 +289,33 @@
         ==
       ==
     ==
+    ::
+      [%updates %in ~]
+    ?+    -.sign  (on-agent:def wire sign)
+        %fact
+      ?+    p.cage.sign  (on-agent:def wire sign)
+          %minesweeper-update
+        =/  newupdate  !<(update q.cage.sign)
+        `this(leaderboard (~(put by leaderboard) [src.bowl score:newupdate]))
+      ==
+    ==
+    ::
+      [%new-members ~]
+    ~&  sign
+    `this
   ==
 ::  /updates
-::    join space: 
-::        subscribe to spaces/space
-::        scry members and subscribe to their minesweeper agents (or will this come as a response when I join?)
+::    join space: subscribe to spaces/space
 ::    leave space: unsubscribe from spaces/space?
 ::  /spaces/space
 ::    new member joins: add them to my leaderboard, subscribe to their minesweeper agent
-::  /minesweeper
-::    new high score: update that entry on leaderboard
 ++  on-arvo   on-arvo:def
 ++  on-fail   on-fail:def
 --
 ::
 ::  Why did I make this a door?
 ::  Couldn't it just be a core? 
-::  Dost need the bowl anymore?
+::  Do I need the bowl anymore?
 |_  =bowl:gall
 ++  generate-grid
   |=  [width=@ud height=@ud mines=@ud]
