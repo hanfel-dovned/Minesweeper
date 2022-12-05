@@ -1,4 +1,4 @@
-/-  *minesweeper, spaces-store
+/-  *minesweeper, spaces-store, visas
 /+  default-agent, dbug, server, schooner
 /*  minesweeper-ui  %html  /app/minesweeper-ui/html
 |%
@@ -30,7 +30,7 @@
         %connect  `/apps/minesweeper  %minesweeper
     ==
     :*  %pass  /spaces-updates  %agent
-        [our.bowl %spaces]  %watch  /updates
+        [our.bowl %spaces]  %watch  /spaces
     ==  
   ==
 :: 
@@ -231,6 +231,8 @@
     `this
     ::
       [%updates %out ~]
+    ::  Your own Minesweeper agent will lazily try
+    ::  to subscribe to itself. We prevent that here.
     ?<  =(src.bowl our.bowl)
     :_  this
     :~  :*  %give  %fact  ~  %minesweeper-update
@@ -245,17 +247,12 @@
   ^-  (quip card _this)
   ?+    wire  (on-agent:def wire sign)
       [%spaces-updates ~]
-    ~&  sign
     ?+    -.sign  (on-agent:def wire sign)
         %fact
       ?+    p.cage.sign  (on-agent:def wire sign)
-          %visa-reaction
-        `this
-        ::
           %spaces-reaction
         =/  reaction  !<(reaction:spaces-store q.cage.sign)
         ?+    -.reaction  (on-agent:def wire sign)
-        ::  Need to handle %initial here
             %add
           =/  members  ~(tap by members:reaction)
           :-
@@ -270,7 +267,7 @@
               ==
             ^-  card
             :*
-              %pass  /new-members
+              %pass  /space/(scot %p ship:path:space:reaction)/(scot %tas space:path:space:reaction)
               %agent  [our.bowl %spaces]
               %watch  /spaces/(scot %p ship:path:space:reaction)/(scot %tas space:path:space:reaction)
             ==
@@ -300,15 +297,33 @@
       ==
     ==
     ::
-      [%new-members ~]
-    ~&  sign
-    `this
+      [%space @ @ ~]
+    ?+    -.sign  (on-agent:def wire sign)
+        %fact
+      ?+    p.cage.sign  (on-agent:def wire sign)
+          %visa-reaction
+        =/  reaction  !<(reaction:visas q.cage.sign)
+        ?+    -.reaction  `this
+            %invite-sent
+          :_  this(leaderboard (~(put by leaderboard) [ship:reaction 0]))
+          :~  :*
+            %pass  /updates/in
+            %agent  [ship:reaction %minesweeper]
+            %watch  /updates/out
+          ==  ==
+        ==
+        ::
+          %spaces-reaction
+        =/  reaction  !<(reaction:spaces-store q.cage.sign)
+        ?+    -.reaction  `this
+            %remove
+          :_  this
+          ~[[%pass wire %agent [our.bowl %spaces] %leave ~]]
+        ==
+      ==
+    ==
   ==
-::  /updates
-::    join space: subscribe to spaces/space
-::    leave space: unsubscribe from spaces/space?
-::  /spaces/space
-::    new member joins: add them to my leaderboard, subscribe to their minesweeper agent
+::
 ++  on-arvo   on-arvo:def
 ++  on-fail   on-fail:def
 --
