@@ -52,6 +52,7 @@ var reveals = state[3]
 var win = state[4]
 var lose = state[5]
 var grid = state[6]
+var scores = state[7]
 
 async function post(tag, data) {
     const response = await fetch('/apps/minesweeper', {
@@ -70,6 +71,7 @@ async function post(tag, data) {
     win = await state[4]
     lose = await state[5]
     grid = await state[6]
+    scores = await state[7]
 
     await go("minesweeper")
 }

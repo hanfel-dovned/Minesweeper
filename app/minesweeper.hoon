@@ -5,7 +5,7 @@
 +$  versioned-state
   $%  state-0
   ==
-+$  state-0  [%0 =settings =game-state gameboard=grid =leaderboard]
++$  state-0  [%0 =settings =game-state gameboard=grid =leaderboard active-space=@t]
 +$  card  card:agent:gall
 -- 
 %-  agent:dbug
@@ -24,6 +24,7 @@
         game-state  [0 %.n %.n]
         gameboard  (generate-grid:hc [10 10 10])
         leaderboard  (malt ~[[our.bowl 0]])
+        active-space  ''
       ==
   :~
     :*  %pass  /eyre/connect  %arvo  %e 
@@ -73,25 +74,31 @@
       [(send [405 ~ [%stock ~]]) state]
       ::
         %'GET'
-      ~&  site
       ?+  site  :_  state 
                 %-  send
                 :+  404
                   ~ 
                 [%plain "404 - Not Found"] 
           [%apps %minesweeper ~]
-        :_  state
+        =/  urltape  (trip url.request.inbound-request)
+        =/  query=@t
+          ^-  @t  ^-  @
+          |-
+          ?~  urltape  ~
+          ?:  =(-.urltape '?')
+            (crip +.urltape)
+          $(urltape +.urltape)
+        ~&  query
+        :_  state(active-space query)  :: This is a cord for now, parse more precisely once spaces works
         %-  send  
-        :+  200
-          ~
-        [%html minesweeper-ui]  
+        [200 ~ [%html minesweeper-ui]]
         ::
           [%apps %minesweeper %state ~]
+        ::  When the game loads and requests scores, send the ones
+        ::  that correspond to query:state
         :_  state
         %-  send
-        :+  200   
-          ~ 
-        [%json (enjs-state [settings game-state gameboard])]
+        [200 ~ [%json (enjs-state [settings game-state gameboard leaderboard])]]
       ==
       ::
         %'POST'
@@ -116,6 +123,7 @@
             +.act
             [0 %.n %.n]
             newboard
+            leaderboard
         ==
         ::
           %guess
@@ -148,6 +156,7 @@
               settings
               [(count-reveals newboard) victory loss]
               newboard
+              leaderboard
           ==
         :_
           %=  state
@@ -178,6 +187,7 @@
             settings
             game-state
             (snap gameboard pos newtile)
+            leaderboard
         ==
       ==
     ==
@@ -199,6 +209,7 @@
             settings=[width=@ud height=@ud mines=@ud]
             game-state=[reveals=@ud win=? lose=?]
             grid=(list [revealed=? flagged=? mine=? neighbors=@ud])
+            leaderboard=(map player=@p score=@ud)
         ==
     ^-  json
     :-  %a
@@ -219,6 +230,16 @@
           [%b flagged:tile]
           [%b mine:tile]
           (numb neighbors:tile)
+      ==
+      ::
+      :-  %a
+      %+  turn
+        ~(tap by leaderboard)
+      |=  [player=@p score=@ud]
+      :-  %a
+      :~
+        (ship player)
+        (numb score)
       ==
     ==
   --
