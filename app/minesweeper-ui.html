@@ -54,6 +54,10 @@ var lose = state[5]
 var grid = state[6]
 var scores = state[7]
 
+scores.sort(function(a, b) {
+    return b[1] - a[1];
+})
+
 async function post(tag, data) {
     const response = await fetch('/apps/minesweeper', {
         method: 'POST',
@@ -650,13 +654,28 @@ var midpoint = (sideGridBuffer * 2 + tileSpace * width)/2
 
 onDraw(() => {
   drawText({
-      text: "SIZE:",
-      font: "apl386",
-      pos: vec2(midpoint - 10, topBuffer*4),
-      origin: "right",
-      size: 50,
-      color: rgb(0, 0, 150)
-  })
+        text: "HIGH SCORES",
+        font: "apl386",
+        pos: vec2(midpoint, topBuffer+40),
+        origin: "center",
+        size: 50,
+        color: rgb(0, 0, 150)
+    })
+
+  for(var i = 0; i < scores.length; i++)
+  {
+    if(i <= 14) //screen size limitation
+    {
+      drawText({
+          text: "~" + scores[i][0] + ": " + scores[i][1],
+          font: "apl386",
+          pos: vec2(midpoint, topBuffer+80+i*40),
+          origin: "center",
+          size: 40,
+          color: rgb(0, 0, 150)
+      })
+    }
+  }
 })
 
 addButton("RETURN TO GAME", vec2(midpoint, topBuffer*.5), () => go("minesweeper"))
