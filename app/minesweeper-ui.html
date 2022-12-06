@@ -5,6 +5,7 @@
 <head>
 	<title>Minesweeper</title>
 	<meta charset="utf-8">
+
 	<style>
 		* {
 			margin: 0;
@@ -38,7 +39,6 @@ const gameHeight = 700
 const scaleX = windowWidth / gameWidth
 const scaleY = windowHeight / gameHeight 
 const scaleGame = Math.min(scaleX, scaleY)*/
-
 
 async function getState() {
         const response = await fetch('/apps/minesweeper/state')
@@ -213,14 +213,25 @@ function drawTile(x, y, tile, backColor)
     var tileColor = rgb(207, 207, 207)
     var shadowColor = rgb(140, 140, 140)
 
-    if(backColor[0] < 200)
+    //Light Mode vs. Dark Mode
+    if(backColor[0] >= 200)
+    {
+      if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && lose == 0 && win == 0)
+        tileColor = rgb(190, 190, 190)
+      if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && lose == 0 && win == 0 && (isMouseDown() || isMouseDown("right")))
+        tileColor = rgb(150, 150, 160)
+    }
+    else
     {
       tileColor = rgb(147, 157, 167)
       shadowColor = rgb(90, 90, 90)
+
+      if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && lose == 0 && win == 0)
+        tileColor = rgb(137, 147, 157)
+      if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && lose == 0 && win == 0 && (isMouseDown() || isMouseDown("right")))
+        tileColor = rgb(117, 127, 137)
     }
 
-    if(mousePos().x > x && mousePos().x < x + tileSize && mousePos().y > y && mousePos().y < y + tileSize && lose == 0 && win == 0 && (isMouseDown() || isMouseDown("right")))
-      tileColor = rgb(150, 150, 160)
 
     var shadowRect = {
         pos: vec2(x + shadowDistance, y + shadowDistance),
@@ -303,7 +314,7 @@ function drawTile(x, y, tile, backColor)
 }
 
 function drawMine(x, y) {
-  if(x == (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2) //hacky way to draw the menu button easily
+  if(x == (sideGridBuffer * 2 + tileSpace * width)/2 - 200) //hacky way to draw the menu button easily
     tileSize = topBuffer * .5;
 
   drawLine({
@@ -382,32 +393,34 @@ function drawButtons()
 
     var y = topBuffer*.25
 
-    var leftx = (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2
+    //var leftx = (sideGridBuffer * 2 + tileSpace * width)*.25 - topBuffer * .25
+    var leftx = (sideGridBuffer * 2 + tileSpace * width)/2 - 200
 
-    if(mousePos().x > leftx && mousePos().x < leftx + tileSize*.5 && mousePos().y > y && mousePos().y < y + tileSize*.5 && isMouseDown())
+    if(mousePos().x > leftx && mousePos().x < leftx + topBuffer * .5 && mousePos().y > y && mousePos().y < y + topBuffer * .5 && isMouseDown())
       tileColor = rgb(150, 150, 160)
 
     drawRect({
         pos: vec2(leftx + 2, y + 2),
-        width: topBuffer *.5,
-        height: topBuffer *.5,
+        width: topBuffer * .5,
+        height: topBuffer * .5,
         color: shadowColor,
         radius: tileRadius
     })
 
     drawRect({
         pos: vec2(leftx, y),
-        width: topBuffer *.5,
-        height: topBuffer *.5,
+        width: topBuffer * .5,
+        height: topBuffer * .5,
         color: tileColor,
         radius: tileRadius
     })
     
     drawMine(leftx, y)
 
-    var rightx = (sideGridBuffer * 2 + tileSpace * width)*.75 - tileSize/2
+    //var rightx = (sideGridBuffer * 2 + tileSpace * width)*.75 - topBuffer * .25
+    var rightx = (sideGridBuffer * 2 + tileSpace * width)/2 + 200 - topBuffer*.5
 
-    if(mousePos().x > rightx && mousePos().x < rightx + tileSize*.5 && mousePos().y > y && mousePos().y < y + tileSize*.5 && isMouseDown())
+    if(mousePos().x > rightx && mousePos().x < rightx + topBuffer * .5 && mousePos().y > y && mousePos().y < y + topBuffer * .5 && isMouseDown())
       tileColor = rgb(150, 150, 160)
     else if(backColor[0] < 200)
       tileColor = rgb(147, 157, 167)
@@ -457,9 +470,9 @@ scene("minesweeper", () => {
 
       if(!mouseOnGrid())
       {
-        if(mousePos().x > (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2 && mousePos().x < (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2 + tileSize*.5 && mousePos().y > topBuffer*.25 && mousePos().y < topBuffer*.25 + tileSize*.5)
+        if(mousePos().x > (sideGridBuffer * 2 + tileSpace * width)/2 - 200 && mousePos().x < (sideGridBuffer * 2 + tileSpace * width)/2 - 200 + topBuffer * .5 && mousePos().y > topBuffer*.25 && mousePos().y < topBuffer*.25 + topBuffer * .5)
           go("newgame")
-        if(mousePos().x > (sideGridBuffer * 2 + tileSpace * width)*.75 - tileSize/2 && mousePos().x < (sideGridBuffer * 2 + tileSpace * width)*.75 - tileSize/2 + tileSize*.5 && mousePos().y > topBuffer*.25 && mousePos().y < topBuffer*.25 + tileSize*.5)
+        if(mousePos().x > (sideGridBuffer * 2 + tileSpace * width)/2 + 200 - topBuffer*.5 && mousePos().x < (sideGridBuffer * 2 + tileSpace * width)/2 + 200 && mousePos().y > topBuffer*.25 && mousePos().y < topBuffer*.25 + topBuffer * .55)
           go("scores")
       }
 
