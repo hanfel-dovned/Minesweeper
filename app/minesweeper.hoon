@@ -1,4 +1,4 @@
-/-  *minesweeper, spaces-store, visas
+/-  *minesweeper, spaces-store, visas, membership
 /+  default-agent, dbug, server, schooner
 /*  minesweeper-ui  %html  /app/minesweeper-ui/html
 |%
@@ -96,10 +96,17 @@
           [%apps %minesweeper %state ~]
         ::  When the game loads and requests scores, send the ones
         ::  that correspond to query:state
+        ::  =/  space-members  .^([%members members:membership] %gx /(scot %p our.bowl)/realm/spaces/(scot %p ~fel)/(scot %tas 'asdf')/members/membership-view)
+        ::  ~&  space-members
         :_  state
         %-  send
         [200 ~ [%json (enjs-state [settings game-state gameboard leaderboard])]]
       ==
+      ::
+      ::  Note that the leaderboard in these POST
+      ::  responses isn't filtered by space,
+      ::  but that's okay, because the frontend
+      ::  won't update its scores here.
       ::
         %'POST'
       ?~  body.request.inbound-request
@@ -156,7 +163,7 @@
               settings
               [(count-reveals newboard) victory loss]
               newboard
-              leaderboard
+              leaderboard  ::  This isn't space-filtered either
           ==
         :_
           %=  state
@@ -187,7 +194,7 @@
             settings
             game-state
             (snap gameboard pos newtile)
-            leaderboard
+            leaderboard  ::  Not space-filtered
         ==
       ==
     ==

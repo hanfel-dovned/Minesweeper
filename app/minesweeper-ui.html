@@ -71,7 +71,6 @@ async function post(tag, data) {
     win = await state[4]
     lose = await state[5]
     grid = await state[6]
-    scores = await state[7]
 
     await go("minesweeper")
 }
@@ -381,7 +380,7 @@ function drawButtons()
 
     var leftx = (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2
 
-    if(mousePos().x > leftx && mousePos().x < leftx + tileSize && mousePos().y > y && mousePos().y < y + tileSize && isMouseDown())
+    if(mousePos().x > leftx && mousePos().x < leftx + tileSize*.5 && mousePos().y > y && mousePos().y < y + tileSize*.5 && isMouseDown())
       tileColor = rgb(150, 150, 160)
 
     drawRect({
@@ -404,7 +403,7 @@ function drawButtons()
 
     var rightx = (sideGridBuffer * 2 + tileSpace * width)*.75 - tileSize/2
 
-    if(mousePos().x > rightx && mousePos().x < rightx + tileSize && mousePos().y > y && mousePos().y < y + tileSize && isMouseDown())
+    if(mousePos().x > rightx && mousePos().x < rightx + tileSize*.5 && mousePos().y > y && mousePos().y < y + tileSize*.5 && isMouseDown())
       tileColor = rgb(150, 150, 160)
     else if(backColor[0] < 200)
       tileColor = rgb(147, 157, 167)
@@ -454,8 +453,10 @@ scene("minesweeper", () => {
 
       if(!mouseOnGrid())
       {
-        if(mousePos().x > (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2 && mousePos().x < (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2 + tileSize && mousePos().y > topBuffer*.25 && mousePos().y < topBuffer*.25 + tileSize)
+        if(mousePos().x > (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2 && mousePos().x < (sideGridBuffer * 2 + tileSpace * width)*.25 - tileSize/2 + tileSize*.5 && mousePos().y > topBuffer*.25 && mousePos().y < topBuffer*.25 + tileSize*.5)
           go("newgame")
+        if(mousePos().x > (sideGridBuffer * 2 + tileSpace * width)*.75 - tileSize/2 && mousePos().x < (sideGridBuffer * 2 + tileSpace * width)*.75 - tileSize/2 + tileSize*.5 && mousePos().y > topBuffer*.25 && mousePos().y < topBuffer*.25 + tileSize*.5)
+          go("scores")
       }
 
     })
@@ -614,6 +615,51 @@ scene("newgame", () => {
       }
     })
 
+
+})
+
+
+scene("scores", () => {
+
+layers([
+    "background",
+    "default",
+], "default")
+
+var backgrounddrawer = add([
+      layer("background"),
+      pos(0, 0)
+])
+
+backgrounddrawer.onDraw(() => {
+  
+  var backColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
+  backColor = backColor.substring(4, backColor.length-1)
+                      .replace(/ /g, '')
+                      .split(',');
+
+  drawRect({
+    pos: vec2(0, 0),
+    width: sideGridBuffer * 2 + tileSpace * width,
+    height: topBuffer + topGridBuffer + bottomGridBuffer + tileSpace * height,
+    color: rgb(backColor[0], backColor[1], backColor[2]),
+  })
+})
+
+var midpoint = (sideGridBuffer * 2 + tileSpace * width)/2
+
+onDraw(() => {
+  drawText({
+      text: "SIZE:",
+      font: "apl386",
+      pos: vec2(midpoint - 10, topBuffer*4),
+      origin: "right",
+      size: 50,
+      color: rgb(0, 0, 150)
+  })
+})
+
+addButton("RETURN TO GAME", vec2(midpoint, topBuffer*.5), () => go("minesweeper"))
 
 })
 
