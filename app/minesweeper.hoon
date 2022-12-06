@@ -5,7 +5,7 @@
 +$  versioned-state
   $%  state-0
   ==
-+$  state-0  [%0 =settings =game-state gameboard=grid =leaderboard active-space=@t]
++$  state-0  [%0 =settings =game-state gameboard=grid =leaderboard active-space=path]
 +$  card  card:agent:gall
 -- 
 %-  agent:dbug
@@ -24,7 +24,7 @@
         game-state  [0 %.n %.n]
         gameboard  (generate-grid:hc [10 10 10])
         leaderboard  (malt ~[[our.bowl 0]])
-        active-space  ''
+        active-space  /
       ==
   :~
     :*  %pass  /eyre/connect  %arvo  %e 
@@ -79,28 +79,34 @@
                 :+  404
                   ~ 
                 [%plain "404 - Not Found"] 
+        ::  Send the HTML and set active space.
           [%apps %minesweeper ~]
         =/  urltape  (trip url.request.inbound-request)
-        =/  query=@t
-          ^-  @t  ^-  @
+        =/  query
+          ^-  path
           |-
           ?~  urltape  ~
-          ?:  =(-.urltape '?')
-            (crip +.urltape)
+          ?:  =(-.urltape '=')
+            (stab (crip +.urltape))
           $(urltape +.urltape)
-        ~&  query
-        :_  state(active-space query)  :: This is a cord for now, parse more precisely once spaces works
+        :_  state(active-space query)
         %-  send  
         [200 ~ [%html minesweeper-ui]]
         ::
+        ::  The frontend will request this upon loading.
+        ::  Send agent state and scores filtered by active space.
           [%apps %minesweeper %state ~]
-        ::  When the game loads and requests scores, send the ones
-        ::  that correspond to query:state
-        ::  =/  space-members  .^([%members members:membership] %gx /(scot %p our.bowl)/realm/spaces/(scot %p ~fel)/(scot %tas 'asdf')/members/membership-view)
-        ::  ~&  space-members
+        =/  scores
+          ?:  =(active-space:state /(scot %p our.bowl)/our)
+            leaderboard
+          ::  =/  space-members  .^([%members members:membership] %gx /(scot %p our.bowl)/realm/spaces/(scot %p +2:active-space:state)/(scot %tas +6:active-space:state)/members/membership-view)
+          ::  ~&  space-members
+          ::  =/  member-map  convert space-members to a (map member ~)
+          ::  (~(int by member-map) leaderboard)
+          leaderboard
         :_  state
         %-  send
-        [200 ~ [%json (enjs-state [settings game-state gameboard leaderboard])]]
+        [200 ~ [%json (enjs-state [settings game-state gameboard scores])]]
       ==
       ::
       ::  Note that the leaderboard in these POST

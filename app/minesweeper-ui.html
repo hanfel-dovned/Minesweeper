@@ -145,8 +145,13 @@ function drawGrid()
     })
 
     var gridColor = rgb(238, 238, 238)
+    var textColor = rgb(30, 30, 30)
+
     if(backColor[0] < 200)
+    {
       gridColor = rgb(188, 198, 208)
+      textColor = rgb(225, 225, 225)
+    }
 
     drawRect({
       pos: vec2(sideBuffer, topBuffer),
@@ -169,7 +174,7 @@ function drawGrid()
             pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topBuffer/2),
             origin: "center",
             size: 50,
-            color: rgb(0, 0, 150)
+            color: textColor
         })
     }
     else if(win == 1)
@@ -180,7 +185,7 @@ function drawGrid()
             pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topBuffer/2),
             origin: "center",
             size: 50,
-            color: rgb(150, 0, 0)
+            color: textColor
         })
     }
     else
@@ -191,7 +196,7 @@ function drawGrid()
             pos: vec2((sideGridBuffer * 2 + tileSpace * width)/2, topBuffer/2),
             origin: "center",
             size: 50,
-            color: rgb(150, 0, 0)
+            color: textColor
         })
     }
 
@@ -501,12 +506,22 @@ go("minesweeper")
 
 function addButton(txt, p, f) {
 
+    var backColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
+    backColor = backColor.substring(4, backColor.length-1)
+                        .replace(/ /g, '')
+                        .split(',');
+
+    var textColor = rgb(100, 100, 100)
+
+    if(backColor[0] < 200)
+      textColor = rgb(155, 155, 155)
+
     const btn = add([
         text(txt, {font: "apl386", size: 50}),
         pos(p),
         area({ cursor: "default", }),
         scale(1),
-        origin("center"),
+        origin("center")
     ])
 
     btn.onClick(f)
@@ -515,9 +530,10 @@ function addButton(txt, p, f) {
         if (btn.isHovering()) {
             const t = time() * 2
             btn.scale = vec2(1.1)
+            btn.color = textColor
         } else {
             btn.scale = vec2(1)
-            btn.color = rgb(150, 0, 0)
+            btn.color = textColor
         }
     })
 }
@@ -536,8 +552,12 @@ scene("newgame", () => {
         pos(0, 0)
   ])
 
+  var backColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
+  backColor = backColor.substring(4, backColor.length-1)
+                      .replace(/ /g, '')
+                      .split(',');
+
   backgrounddrawer.onDraw(() => {
-    
     var backColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
     backColor = backColor.substring(4, backColor.length-1)
                         .replace(/ /g, '')
@@ -550,6 +570,11 @@ scene("newgame", () => {
       color: rgb(backColor[0], backColor[1], backColor[2]),
     })
   })
+
+  var textColor = rgb(30, 30, 30)
+
+  if(backColor[0] < 200)
+    textColor = rgb(225, 225, 225)
 
   var midpoint = (sideGridBuffer * 2 + tileSpace * width)/2
 
@@ -567,7 +592,7 @@ scene("newgame", () => {
         pos: vec2(midpoint - 10, topBuffer*4),
         origin: "right",
         size: 50,
-        color: rgb(0, 0, 150)
+        color: textColor
     })
 
     drawText({
@@ -576,7 +601,7 @@ scene("newgame", () => {
         pos: vec2(midpoint - 10, topBuffer*5),
         origin: "right",
         size: 50,
-        color: rgb(0, 0, 150)
+        color: textColor
     })
 
     for(var i = 0; i < 2; i++)
@@ -586,14 +611,14 @@ scene("newgame", () => {
         p2: vec2(triangleLeft + triangleWidth, topBuffer*(4+i) + 10),
         p3: vec2(triangleLeft + triangleWidth, topBuffer*(4+i) - 30),
         pos: vec2(0, 0),
-        color: rgb(0, 0, 150)
+        color: textColor
       })
 
       drawRect({
         pos: vec2(triangleLeft + vals[i]*triangleWidth/maxs[i], topBuffer*(4+i) - 30),
         width: 5,
         height: 40,
-        color: rgb(0, 0, 0),
+        color: textColor
       })
 
       drawText({
@@ -602,7 +627,7 @@ scene("newgame", () => {
         pos: vec2(triangleLeft + triangleWidth + 10, topBuffer*(4+i)),
         origin: "left",
         size: 40,
-        color: rgb(0, 0, 150)
+        color: textColor
       })
     }
 
@@ -631,68 +656,69 @@ scene("newgame", () => {
           }
       }
     })
-
-
 })
 
 
 scene("scores", () => {
 
-layers([
-    "background",
-    "default",
-], "default")
+  layers([
+      "background",
+      "default",
+  ], "default")
 
-var backgrounddrawer = add([
-      layer("background"),
-      pos(0, 0)
-])
+  var backgrounddrawer = add([
+        layer("background"),
+        pos(0, 0)
+  ])
 
-backgrounddrawer.onDraw(() => {
-  
-  var backColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
-  backColor = backColor.substring(4, backColor.length-1)
-                      .replace(/ /g, '')
-                      .split(',');
 
-  drawRect({
-    pos: vec2(0, 0),
-    width: sideGridBuffer * 2 + tileSpace * width,
-    height: topBuffer + topGridBuffer + bottomGridBuffer + tileSpace * height,
-    color: rgb(backColor[0], backColor[1], backColor[2]),
-  })
-})
+  backgrounddrawer.onDraw(() => {
 
-var midpoint = (sideGridBuffer * 2 + tileSpace * width)/2
+    var backColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
+    backColor = backColor.substring(4, backColor.length-1)
+                        .replace(/ /g, '')
+                        .split(',');
 
-onDraw(() => {
-  drawText({
-        text: "HIGH SCORES",
-        font: "apl386",
-        pos: vec2(midpoint, topBuffer+40),
-        origin: "center",
-        size: 50,
-        color: rgb(0, 0, 150)
+    var textColor = rgb(30, 30, 30)
+    if(backColor[0] < 200)
+      textColor = rgb(225, 225, 225)
+
+    drawRect({
+      pos: vec2(0, 0),
+      width: sideGridBuffer * 2 + tileSpace * width,
+      height: topBuffer + topGridBuffer + bottomGridBuffer + tileSpace * height,
+      color: rgb(backColor[0], backColor[1], backColor[2]),
     })
+    
+    var midpoint = (sideGridBuffer * 2 + tileSpace * width)/2
 
-  for(var i = 0; i < scores.length; i++)
-  {
-    if(i <= 14) //screen size limitation
-    {
       drawText({
-          text: "~" + scores[i][0] + ": " + scores[i][1],
-          font: "apl386",
-          pos: vec2(midpoint, topBuffer+80+i*40),
-          origin: "center",
-          size: 40,
-          color: rgb(0, 0, 150)
-      })
-    }
-  }
-})
+            text: "HIGH SCORES",
+            font: "apl386",
+            pos: vec2(midpoint, topBuffer+40),
+            origin: "center",
+            size: 50,
+            color: textColor
+        })
 
-addButton("RETURN TO GAME", vec2(midpoint, topBuffer*.5), () => go("minesweeper"))
+      for(var i = 0; i < scores.length; i++)
+      {
+        if(i <= 14) //screen size limitation
+        {
+          drawText({
+              text: "~" + scores[i][0] + ": " + scores[i][1],
+              font: "apl386",
+              pos: vec2(midpoint, topBuffer+80+i*40),
+              origin: "center",
+              size: 40,
+              color: textColor
+          })
+        }
+      }
+  })
 
+  var midpoint = (sideGridBuffer * 2 + tileSpace * width)/2
+  addButton("RETURN TO GAME", vec2(midpoint, topBuffer*.5), () => go("minesweeper"))
 })
 
 
