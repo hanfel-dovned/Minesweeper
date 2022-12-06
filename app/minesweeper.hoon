@@ -99,11 +99,13 @@
         =/  scores
           ?:  =(active-space:state /(scot %p our.bowl)/our)
             leaderboard
-          ::  =/  space-members  .^([%members members:membership] %gx /(scot %p our.bowl)/realm/spaces/(scot %p +2:active-space:state)/(scot %tas +6:active-space:state)/members/membership-view)
-          ::  ~&  space-members
-          ::  =/  member-map  convert space-members to a (map member ~)
-          ::  (~(int by member-map) leaderboard)
-          leaderboard
+          =/  space-members  .^(view:membership %gx /(scot %p our.bowl)/spaces/(scot %da now.bowl)/(path-help:hc +2:active-space:state)/(path-help:hc +6:active-space:state)/members/noun)
+          ?+    -.space-members  leaderboard
+              %members
+            =/  member-map  ^-  members:membership  +.space-members
+            =/  member-map-uds  `(map @p @ud)`(~(run by member-map) |=(x=member:membership 0))
+            (~(int by member-map-uds) leaderboard)
+          ==
         :_  state
         %-  send
         [200 ~ [%json (enjs-state [settings game-state gameboard scores])]]
@@ -550,4 +552,10 @@
 ::
 ++  new-tile  [%.n %.n %.n 0]
 ++  mine-tile  ^-  tile  [%.n %.n %.y 0]
+::
+::  Because I don't know how else to dereference
+::  a face within a path
+++  path-help
+  |=  x=@ta
+  x
 --
