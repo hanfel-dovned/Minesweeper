@@ -284,6 +284,10 @@
   ?+    wire  (on-agent:def wire sign)
       [%spaces-updates ~]
     ?+    -.sign  (on-agent:def wire sign)
+        %kick
+      :_  this
+      :~  [%pass wire %agent [src.bowl %spaces] %watch /spaces]  ==
+      ::
         %fact
       ?+    p.cage.sign  (on-agent:def wire sign)
           %spaces-reaction
@@ -325,6 +329,10 @@
     ::
       [%updates %in ~]
     ?+    -.sign  (on-agent:def wire sign)
+        %kick
+      :_  this
+      :~  [%pass wire %agent [src.bowl %minesweeper] %watch /updates/out]  ==
+      ::
         %fact
       ?+    p.cage.sign  (on-agent:def wire sign)
           %minesweeper-update
@@ -335,6 +343,10 @@
     ::
       [%space @ @ ~]
     ?+    -.sign  (on-agent:def wire sign)
+        %kick
+      :_  this
+      :~  [%pass wire %agent [src.bowl %spaces] %watch /spaces/(path-help:hc +6:wire)/(path-help:hc +14:wire)]  ==
+      ::
         %fact
       ?+    p.cage.sign  (on-agent:def wire sign)
           %visa-reaction
