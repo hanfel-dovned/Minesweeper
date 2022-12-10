@@ -75,6 +75,7 @@ async function post(tag, data) {
     win = await state[4]
     lose = await state[5]
     grid = await state[6]
+    scores = await state[7]
 
     await go("minesweeper")
 }
@@ -306,7 +307,7 @@ function drawTile(x, y, tile, backColor)
     {
       drawMine(x, y)
     }
-    if(flagged == 1 && lose == 0)
+    if(flagged == 1 && lose == 0 && win == 0)
     {
       drawTriangle({
           p1: vec2(x + tileSize*.5, y + tileSize*.33),

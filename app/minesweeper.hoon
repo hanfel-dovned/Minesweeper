@@ -171,7 +171,7 @@
               settings
               [(count-reveals newboard) victory loss]
               newboard
-              leaderboard  ::  This isn't space-filtered either
+              leaderboard
           ==
         :_
           %=  state
