@@ -1,6 +1,6 @@
 :~  title+'Minesweeper'
     info+'Classic Minesweeper.'
-    color+0x10.0032
+    color+0xee.c9d1
     base+'minesweeper'
     site+/apps/minesweeper
     version+[1 0 0]
