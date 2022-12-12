@@ -77,6 +77,10 @@ async function post(tag, data) {
     grid = await state[6]
     scores = await state[7]
 
+    await scores.sort(function(a, b) {
+      return b[1] - a[1];
+    })
+
     await go("minesweeper")
 }
 

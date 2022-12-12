@@ -5,7 +5,7 @@
 +$  versioned-state
   $%  state-0
   ==
-+$  state-0  [%0 =settings =game-state gameboard=grid =leaderboard active-space=path]
++$  state-0  [%0 =settings =game-state gameboard=grid =leaderboard active-space=@t]
 +$  card  card:agent:gall
 -- 
 %-  agent:dbug
@@ -24,7 +24,7 @@
         game-state  [0 %.n %.n]
         gameboard  (generate-grid:hc [10 10 10])
         leaderboard  (malt ~[[our.bowl 0]])
-        active-space  /
+        active-space  ''
       ==
   :~
     :*  %pass  /eyre/connect  %arvo  %e 
@@ -83,11 +83,11 @@
           [%apps %minesweeper ~]
         =/  urltape  (trip url.request.inbound-request)
         =/  query
-          ^-  path
+          ^-  @t
           |-
-          ?~  urltape  ~
+          ?~  urltape  ''
           ?:  =(-.urltape '=')
-            (stab (crip +.urltape))
+            (crip +.urltape)
           $(urltape +.urltape)
         :_  state(active-space query)
         %-  send  
@@ -97,7 +97,7 @@
         ::  Send agent state and scores filtered by active space.
           [%apps %minesweeper %state ~]
         =/  scores
-          ?:  =(active-space:state /(scot %p our.bowl)/our)
+          ?:  =(active-space:state (weld "/" (weld (trip `@t`(scot %p our.bowl)) "/our")))
             leaderboard
           =/  space-members  .^(view:membership %gx /(scot %p our.bowl)/spaces/(scot %da now.bowl)/(path-help:hc +2:active-space:state)/(path-help:hc +6:active-space:state)/members/noun)
           ?+    -.space-members  leaderboard
@@ -317,7 +317,9 @@
             ?~  members
               leaderboard
             %=  $
-                leaderboard  %-  
+                leaderboard  ?.  =(~ (~(get by leaderboard) -<.members))
+                               leaderboard
+                             %-  
                              ~(put by leaderboard)
                              [-<.members 0]
                 members  +.members
