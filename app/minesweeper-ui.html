@@ -10,12 +10,14 @@
 		* {
 			margin: 0;
 		}
-		html,
+		html {
+      background-color: var(--rlm-window-color);
+    }
 		body {
 			width: 100%;
 			height: 100%;
 			overflow: hidden;
-      background-color: var(--rlm-card-color);
+      background-color: var(--rlm-window-color);
 		}
 		canvas {
 			display: block;
@@ -23,22 +25,15 @@
       padding-right: 0;
       margin-left: auto;
       margin-right: auto;
+      background-color: var(--rlm-window-color);
 		}
 	</style>
 </head>
 
-
+<div style="background-color: var(--rlm-window-color);">
 <script type="module">
 
 import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
-
-/*const windowWidth = document.documentElement.clientWidth
-const windowHeight = document.documentElement.clientHeight
-const gameWidth = 700
-const gameHeight = 700
-const scaleX = windowWidth / gameWidth
-const scaleY = windowHeight / gameHeight 
-const scaleGame = Math.min(scaleX, scaleY)*/
 
 async function getState() {
         const response = await fetch('/apps/minesweeper/state')
@@ -117,12 +112,24 @@ var shadowDistance = 2
 if(tileSize < 20)
   shadowDistance = 1
 
+//Black in browser
+var kaboomColor = ['255', '255', '255', '255']
+
+//If Realm defines a background-color, use this one
+if('background-color' in window.getComputedStyle(document.body)){
+  kaboomColor = window.getComputedStyle(document.body).getPropertyValue('background-color')
+    
+  kaboomColor = kaboomColor.substring(4, kaboomColor.length-1)
+                          .replace(/ /g, '')
+                          .split(',');
+}
+
 kaboom({
     //This is dumb: tileSize is already calculated from height
     width: width * tileSpace + sideGridBuffer * 2 + sideBuffer * 2,
     height: height * tileSpace + topGridBuffer + bottomGridBuffer + topBuffer,
     //scale: scaleGame,
-    background: [255, 255, 255]
+    background: [kaboomColor[0], kaboomColor[1], kaboomColor[2]]
 })
 
 function drawGrid()
@@ -130,7 +137,7 @@ function drawGrid()
 
   onDraw(() => {
 
-    //White in browser
+    //Black in browser
     var backColor = ['255', '255', '255', '255']
 
     //If Realm defines a background-color, use this one
@@ -506,6 +513,14 @@ scene("minesweeper", () => {
     
 })
 
+onDraw(() => {
+  drawRect({
+    pos: vec2(0, 0),
+    width: 1000,
+    height: 1000,
+    color: rgb(kaboomColor[0], kaboomColor[1], kaboomColor[2]),
+})})
+
 go("minesweeper")
 
 
@@ -729,6 +744,8 @@ scene("scores", () => {
 
 
 </script>
+
+</div>
 
 </body>
 
